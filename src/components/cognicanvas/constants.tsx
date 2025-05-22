@@ -1,13 +1,22 @@
 
-import { FileText, Globe, MessageSquare, ImageIcon, ListChecks, Table, Presentation, Code, Gamepad2, Settings, HelpCircle, Brain, Lightbulb, Send } from 'lucide-react';
+import { FileText, Globe, MessageSquare, ImageIcon, ListChecks, Table, Presentation, Code, Gamepad2, Settings as SettingsIcon, HelpCircle, Brain, Lightbulb, Send } from 'lucide-react';
 import type { Tool, ToolProps } from './types';
 import { DocumentProcessor } from './tools/document-processor';
 import { WebNavigator } from './tools/web-navigator';
+import { TaskManager } from './tools/task-manager';
+import { SpreadsheetTool } from './tools/spreadsheet-tool';
+import { PresentationBuilder } from './tools/presentation-builder';
+import { CommsHub } from './tools/comms-hub';
+import { CreativeSuite } from './tools/creative-suite';
+import { CodeEditor } from './tools/code-editor';
+import { GameCenter } from './tools/game-center';
+import { SettingsTool } from './tools/settings-tool'; // Renamed from Settings to SettingsTool to avoid conflict
 import React from 'react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 // Generic placeholder component for tools not yet implemented
-// Changed to accept ToolProps for consistency, though it primarily uses 'tool'.
+// This can be removed or kept for future tools that might start as placeholders.
+// For now, all listed tools will have a basic component.
 const PlaceholderToolComponent: React.FC<ToolProps> = ({ tool }) => (
   <div className="h-full flex flex-col shadow-xl rounded-lg overflow-hidden border-border bg-card">
     <div className="bg-card border-b p-4">
@@ -93,7 +102,7 @@ export const ALL_TOOLS: Tool[] = [
     name: 'Comms Hub',
     icon: MessageSquare,
     description: 'Integrated email, calendar, and messenger.',
-    component: PlaceholderToolComponent, // Simplified: PlaceholderToolComponent now takes ToolProps
+    component: CommsHub,
     category: 'Communication',
   },
   {
@@ -101,7 +110,7 @@ export const ALL_TOOLS: Tool[] = [
     name: 'Creative Suite',
     icon: ImageIcon,
     description: 'Tools for image generation and editing.',
-    component: PlaceholderToolComponent,
+    component: CreativeSuite,
     category: 'Creative',
   },
   {
@@ -109,7 +118,7 @@ export const ALL_TOOLS: Tool[] = [
     name: 'Task Manager',
     icon: ListChecks,
     description: 'AI-assisted task planning and tracking.',
-    component: PlaceholderToolComponent,
+    component: TaskManager,
     category: 'Productivity',
   },
   {
@@ -117,7 +126,7 @@ export const ALL_TOOLS: Tool[] = [
     name: 'Spreadsheet Tool',
     icon: Table,
     description: 'Data organization, calculation, and visualization.',
-    component: PlaceholderToolComponent,
+    component: SpreadsheetTool,
     category: 'Productivity',
   },
   {
@@ -125,7 +134,7 @@ export const ALL_TOOLS: Tool[] = [
     name: 'Presentation Builder',
     icon: Presentation,
     description: 'Create slideshows with AI assistance.',
-    component: PlaceholderToolComponent,
+    component: PresentationBuilder,
     category: 'Productivity',
   },
   {
@@ -133,7 +142,7 @@ export const ALL_TOOLS: Tool[] = [
     name: 'Code Editor',
     icon: Code,
     description: 'View and make minor edits to code snippets.',
-    component: PlaceholderToolComponent,
+    component: CodeEditor,
     category: 'Development',
   },
   {
@@ -141,18 +150,15 @@ export const ALL_TOOLS: Tool[] = [
     name: 'Game Center',
     icon: Gamepad2,
     description: 'Access to casual games.',
-    component: PlaceholderToolComponent,
+    component: GameCenter,
     category: 'Entertainment',
   },
   {
     id: 'settings',
     name: 'Settings',
-    icon: Settings,
-    description: 'Customize your CogniCanvas experience.',
-    component: PlaceholderToolComponent,
+    icon: SettingsIcon, // Using the aliased SettingsIcon
+    description: 'Customize your Agent-Computer experience.',
+    component: SettingsTool,
     category: 'System',
   },
 ];
-
-// Removed the previous patching logic as it's no longer needed with the direct component assignment
-// and correct prop typing (ToolProps) for PlaceholderToolComponent.
