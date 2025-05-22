@@ -41,10 +41,11 @@ export const OrchestrationCenter: React.FC<OrchestrationCenterProps> = ({ tools,
   const scrollViewportRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+
   useEffect(() => {
     setClientReady(true);
   }, []);
-
+  
   useEffect(() => {
     if (clientReady && conversation.length === 0) {
       setConversation([
@@ -52,6 +53,7 @@ export const OrchestrationCenter: React.FC<OrchestrationCenterProps> = ({ tools,
       ]);
     }
   }, [userName, clientReady, conversation.length]);
+
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -128,7 +130,7 @@ export const OrchestrationCenter: React.FC<OrchestrationCenterProps> = ({ tools,
 
   return (
     <div className="grid grid-rows-[minmax(0,1fr)_auto] h-full p-4 md:p-6 lg:p-8 bg-background text-foreground overflow-hidden gap-6 lg:gap-8">
-      <Card className="shadow-xl border-border flex flex-col min-h-0"> {/* Chat Card - Removed flex-grow, grid handles sizing */}
+      <Card className="shadow-xl border-border flex flex-col min-h-0"> {/* Chat Card */}
         <CardHeader className="border-b p-4">
           <CardTitle className="text-xl flex items-center">
             <Sparkles className="mr-3 h-6 w-6 text-primary" />
@@ -137,7 +139,7 @@ export const OrchestrationCenter: React.FC<OrchestrationCenterProps> = ({ tools,
         </CardHeader>
         <CardContent className="p-0 flex-grow flex flex-col overflow-hidden">
           <ScrollArea className="flex-grow" viewportRef={scrollViewportRef}>
-            <div className="p-6 space-y-4">
+            <div className="p-6 space-y-4"> {/* Increased padding here for chat messages */}
               {conversation.map((msg) => (
                 <div key={msg.id} className={`flex w-full ${msg.sender === 'user' ? 'justify-end' : 'justify-start'} ${msg.sender === 'log' ? 'my-1' : 'my-2'}`}>
                   {msg.sender === 'agent' && (
@@ -221,7 +223,7 @@ export const OrchestrationCenter: React.FC<OrchestrationCenterProps> = ({ tools,
         </CardContent>
       </Card>
 
-      <Card className="shadow-xl border-border shrink-0"> {/* Quick Access Card - will take auto height */}
+      <Card className="shadow-xl border-border shrink-0"> {/* Quick Access Card */}
         <CardHeader className="border-b p-4">
           <CardTitle className="text-xl flex items-center">
             <PlayCircle className="mr-3 h-6 w-6 text-primary" />
@@ -229,25 +231,32 @@ export const OrchestrationCenter: React.FC<OrchestrationCenterProps> = ({ tools,
           </CardTitle>
         </CardHeader>
         <CardContent className="p-4">
-            <h4 className="font-semibold mb-3 text-md">Launch a Specific Tool</h4>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
               {quickAccessTools.map(tool => (
-                <Button key={tool.id} variant="outline" className="flex-col h-auto p-3.5 justify-start items-start text-left hover:bg-accent/50" onClick={() => onSelectTool(tool)}>
-                  <tool.icon className="h-5 w-5 mb-2 text-primary" />
-                  <span className="text-sm font-medium">{tool.name}</span>
-                  <span className="text-xs text-muted-foreground truncate w-full mt-0.5">{tool.description}</span>
+                <Button 
+                  key={tool.id} 
+                  variant="outline" 
+                  className="flex-col items-center justify-center h-auto p-2.5 text-center hover:bg-accent/50" 
+                  onClick={() => onSelectTool(tool)}
+                  title={tool.description}
+                >
+                  <tool.icon className="h-5 w-5 mb-1.5 text-primary" />
+                  <span className="text-xs font-medium">{tool.name}</span>
                 </Button>
               ))}
-              <Button variant="outline" className="flex-col h-auto p-3.5 justify-start items-start text-left hover:bg-accent/50" onClick={() => alert('Add MCP Server dialog would appear here.')}>
-                  <PlugZap className="h-5 w-5 mb-2 text-primary" />
-                  <span className="text-sm font-medium">Add MCP Server</span>
-                   <span className="text-xs text-muted-foreground truncate w-full mt-0.5">Connect a new server instance</span>
+              <Button 
+                variant="outline" 
+                className="flex-col items-center justify-center h-auto p-2.5 text-center hover:bg-accent/50" 
+                onClick={() => alert('Add MCP Server dialog would appear here.')}
+                title="Connect a new server instance"
+              >
+                  <PlugZap className="h-5 w-5 mb-1.5 text-primary" />
+                  <span className="text-xs font-medium">Add Server</span>
               </Button>
             </div>
         </CardContent>
       </Card>
     </div>
   );
-};
 
     
