@@ -5,9 +5,10 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import type { Tool } from './types';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'; // Added ScrollBar
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Bot, Send, PlayCircle, ExternalLink, PlugZap } from 'lucide-react';
+import { Bot, Send, PlayCircle, ExternalLink, PlugZap, Sparkles, MessageSquare, Loader2 } from 'lucide-react';
+import { orchestrateTask, type OrchestrateTaskInput, type ToolInfo } from '@/ai/flows/orchestrate-task-flow';
 
 interface OrchestrationCenterProps {
   tools: Tool[];
@@ -17,9 +18,12 @@ interface OrchestrationCenterProps {
 
 interface OrchestrationMessage {
   id: string;
-  sender: 'user' | 'agent';
+  sender: 'user' | 'agent' | 'log';
   text: string;
   timestamp: Date;
+  planSteps?: string[];
+  identifiedToolIds?: string[];
+  isPlan?: boolean;
 }
 
 const generateUniqueId = () => {
@@ -30,25 +34,26 @@ export const OrchestrationCenter: React.FC<OrchestrationCenterProps> = ({ tools,
   const [userInput, setUserInput] = useState('');
   const [conversation, setConversation] = useState<OrchestrationMessage[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [clientReady, setClientReady] = useState(false); // New state to track client mount
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const [clientReady, setClientReady] = useState(false);
+  const [currentPlan, setCurrentPlan] = useState<{ planSteps: string[], identifiedToolIds: string[] } | null>(null);
+
+  const scrollViewportRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setClientReady(true); // Set to true after initial client render
+    setClientReady(true);
   }, []);
 
   useEffect(() => {
-    // Only set initial welcome message on client-side after hydration and clientReady is true
     if (clientReady) {
       setConversation([
-        { id: generateUniqueId() + '-initial-agent', sender: 'agent', text: `Hello ${userName}, how can I help you orchestrate your day?`, timestamp: new Date() }
+        { id: generateUniqueId() + '-initial-agent', sender: 'agent', text: `Hello ${userName}, I'm your Orchestration Agent. How can I help you orchestrate a task or project today?`, timestamp: new Date() }
       ]);
     }
-  }, [userName, clientReady]); // Depend on clientReady
+  }, [userName, clientReady]);
 
   const scrollToBottom = useCallback(() => {
-    if (scrollAreaRef.current) {
-      scrollAreaRef.current.scrollTo({ top: scrollAreaRef.current.scrollHeight, behavior: 'smooth' });
+    if (scrollViewportRef.current) {
+      scrollViewportRef.current.scrollTo({ top: scrollViewportRef.current.scrollHeight, behavior: 'smooth' });
     }
   }, []);
 
@@ -56,77 +61,149 @@ export const OrchestrationCenter: React.FC<OrchestrationCenterProps> = ({ tools,
     scrollToBottom();
   }, [conversation, scrollToBottom]);
 
+  const addMessage = useCallback((sender: OrchestrationMessage['sender'], text: string, planDetails?: { planSteps: string[], identifiedToolIds: string[], isPlan: boolean }) => {
+    setConversation(prev => [...prev, { id: generateUniqueId(), sender, text, timestamp: new Date(), ...planDetails }]);
+  }, []);
+
   const handleSendMessage = async () => {
     if (!userInput.trim()) return;
 
-    const newUserMessage: OrchestrationMessage = {
-      id: generateUniqueId() + '-user',
-      sender: 'user',
-      text: userInput,
-      timestamp: new Date(),
-    };
-    setConversation(prev => [...prev, newUserMessage]);
+    const currentInput = userInput;
+    addMessage('user', currentInput);
     setUserInput('');
     setIsProcessing(true);
+    setCurrentPlan(null); // Clear previous plan
 
-    setTimeout(() => {
-      let agentResponseText = "I'm processing your request. Let's break this down...";
-      if (userInput.toLowerCase().includes("tokyo trip")) {
-        agentResponseText = "Okay, for your Tokyo trip, I can help with flights, hotels, calendar, and a packing list. Do you have airline or hotel preferences?";
-      } else if (userInput.toLowerCase().includes("hello") || userInput.toLowerCase().includes("hi")) {
-        agentResponseText = `Hi ${userName}! What complex task can I help you plan and execute today?`;
-      } else {
-        agentResponseText = `I've received your request: "${newUserMessage.text.substring(0,50)}...". I'll propose a plan: 1. Analyze. 2. Delegate. 3. Monitor. Proceed?`;
+    addMessage('log', 'Orchestration Agent is analyzing your request...');
+
+    try {
+      const availableTools: ToolInfo[] = tools.map(t => ({ id: t.id, name: t.name, description: t.description }));
+      const orchestrationInput: OrchestrateTaskInput = { userGoal: currentInput, availableTools };
+      const result = await orchestrateTask(orchestrationInput);
+
+      if (result.agentThoughtProcess) {
+        addMessage('log', `Agent's thought: ${result.agentThoughtProcess}`);
       }
 
-      const newAgentMessage: OrchestrationMessage = {
-        id: generateUniqueId() + '-agent',
-        sender: 'agent',
-        text: agentResponseText,
-        timestamp: new Date(),
-      };
-      setConversation(prev => [...prev, newAgentMessage]);
+      if (result.clarificationQuestion) {
+        addMessage('agent', result.clarificationQuestion);
+      } else if (result.planSteps && result.planSteps.length > 0) {
+        addMessage('agent', "Here's the plan I've formulated:", { planSteps: result.planSteps, identifiedToolIds: result.identifiedToolIds, isPlan: true });
+        setCurrentPlan({ planSteps: result.planSteps, identifiedToolIds: result.identifiedToolIds });
+      } else {
+        addMessage('agent', "I'm not sure how to proceed with that. Could you please provide more details or clarify your goal?");
+      }
+
+    } catch (error: any) {
+      console.error('Orchestration Error:', error);
+      addMessage('agent', `Sorry, an error occurred while planning: ${error.message || "Please try again."}`);
+    } finally {
       setIsProcessing(false);
-    }, 1500);
+    }
+  };
+
+  const handleExecutePlan = () => {
+    if (currentPlan && currentPlan.identifiedToolIds.length > 0) {
+      const firstToolId = currentPlan.identifiedToolIds[0];
+      const toolToOpen = tools.find(t => t.id === firstToolId);
+      if (toolToOpen) {
+        addMessage('log', `Starting plan by opening ${toolToOpen.name}...`);
+        onSelectTool(toolToOpen);
+      } else {
+        addMessage('agent', `Sorry, I couldn't find the first tool in the plan: ${firstToolId}.`);
+      }
+    }
+    setCurrentPlan(null); // Clear plan after attempting execution
+  };
+
+  const handleRefineTask = () => {
+    addMessage('agent', "Okay, please rephrase your task or provide more details for a new plan.");
+    setCurrentPlan(null);
+    setUserInput(''); // Clear input for new goal
   };
   
-  const quickAccessTools = tools.filter(tool => tool.category === 'Productivity' || tool.category === 'Creative');
+  const quickAccessTools = tools.filter(tool => 
+    tool.category === 'Productivity' || tool.category === 'Creative' || tool.category === 'Communication'
+  );
 
   return (
-    <div className="flex flex-col h-full p-4 md:p-6 lg:p-8 bg-background text-foreground overflow-y-auto space-y-6 lg:space-y-8">
-      <Card className="shadow-xl border-border flex flex-col flex-grow lg:flex-grow-0 lg:min-h-[400px]">
-        <CardHeader className="border-b">
+    <div className="flex flex-col h-full p-4 md:p-6 lg:p-8 bg-background text-foreground overflow-hidden space-y-6 lg:space-y-8">
+      <Card className="shadow-xl border-border flex flex-col flex-grow min-h-0"> {/* Added min-h-0 for flex child */}
+        <CardHeader className="border-b p-4">
           <CardTitle className="text-xl flex items-center">
-            <Bot className="mr-3 h-6 w-6 text-primary" />
+            <Sparkles className="mr-3 h-6 w-6 text-primary" />
             Orchestration Agent
           </CardTitle>
         </CardHeader>
-        <CardContent className="p-0 flex-grow flex flex-col">
-          <ScrollArea className="flex-grow p-4 space-y-4 min-h-[200px] max-h-[calc(100vh-450px)] sm:max-h-[calc(100vh-400px)] lg:max-h-[calc(100%-100px)]" ref={scrollAreaRef}>
-            {conversation.map((msg) => (
-              <div key={msg.id} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`p-3 rounded-lg max-w-[80%] text-sm ${msg.sender === 'user' ? 'bg-primary text-primary-foreground' : 'bg-card border'}`}>
-                  {msg.text}
-                  <p className={`text-xs mt-1 ${msg.sender === 'user' ? 'text-primary-foreground/70' : 'text-muted-foreground/70'}`}>
-                    {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </p>
+        <CardContent className="p-0 flex-grow flex flex-col overflow-hidden"> {/* Added overflow-hidden */}
+          <ScrollArea className="flex-grow" viewportRef={scrollViewportRef}>
+            <div className="p-4 space-y-4">
+              {conversation.map((msg) => (
+                <div key={msg.id} className={`flex w-full ${msg.sender === 'user' ? 'justify-end' : 'justify-start'} ${msg.sender === 'log' ? 'my-1' : 'my-2'}`}>
+                  {msg.sender === 'agent' && (
+                    <Avatar className="h-7 w-7 self-start mr-2 border border-border shrink-0">
+                      <AvatarFallback className="bg-primary/10">
+                        <Sparkles className="h-4 w-4 text-primary" />
+                      </AvatarFallback>
+                    </Avatar>
+                  )}
+                  <div className={`p-3 rounded-lg text-sm shadow-sm max-w-[85%] md:max-w-[75%] ${
+                    msg.sender === 'user' ? 'bg-primary text-primary-foreground ml-auto rounded-br-none' 
+                    : msg.sender === 'agent' ? 'bg-card border border-border rounded-bl-none' 
+                    : 'text-xs text-muted-foreground italic w-full text-center py-1.5 px-2 bg-transparent shadow-none'
+                  }`}>
+                    {msg.text}
+                    {msg.isPlan && msg.planSteps && msg.planSteps.length > 0 && (
+                      <div className="mt-2.5 pt-2.5 border-t border-border/50">
+                        <h4 className="font-semibold mb-1.5 text-sm">Proposed Plan:</h4>
+                        <ul className="list-disc list-inside space-y-1 text-sm">
+                          {msg.planSteps.map((step, index) => <li key={index}>{step}</li>)}
+                        </ul>
+                      </div>
+                    )}
+                    {msg.sender !== 'log' && (
+                      <p className={`text-xs mt-1.5 ${msg.sender === 'user' ? 'text-primary-foreground/70 text-right' : 'text-muted-foreground/70'}`}>
+                        {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                    )}
+                  </div>
+                  {msg.sender === 'user' && (
+                     <Avatar className="h-7 w-7 self-start ml-2 border border-border shrink-0">
+                        <AvatarFallback className="bg-accent/20">
+                           <MessageSquare className="h-4 w-4 text-accent" />
+                        </AvatarFallback>
+                     </Avatar>
+                  )}
                 </div>
-              </div>
-            ))}
-            {isProcessing && (
-               <div className="flex justify-start">
-                  <div className="p-3 rounded-lg bg-card border text-sm">Thinking...</div>
-               </div>
-            )}
+              ))}
+              {isProcessing && (
+                 <div className="flex justify-start my-2">
+                    <Avatar className="h-7 w-7 self-start mr-2 border border-border shrink-0">
+                        <AvatarFallback className="bg-primary/10">
+                           <Sparkles className="h-4 w-4 text-primary" />
+                        </AvatarFallback>
+                    </Avatar>
+                    <div className="p-3 rounded-lg bg-card border border-border text-sm shadow-sm">
+                      <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                    </div>
+                 </div>
+              )}
+            </div>
           </ScrollArea>
-          <div className="p-4 border-t bg-card">
-            <div className="flex items-center gap-2">
+          {currentPlan && !isProcessing && (
+            <div className="p-4 border-t bg-card flex gap-2 justify-end">
+              <Button variant="outline" onClick={handleRefineTask}>Refine Task</Button>
+              <Button onClick={handleExecutePlan}>Execute Plan</Button>
+            </div>
+          )}
+          <div className="p-3 border-t bg-card">
+            <div className="flex items-start gap-2">
               <Textarea
                 value={userInput}
                 onChange={(e) => setUserInput(e.target.value)}
-                placeholder="Describe the task you'd like to accomplish..."
-                rows={2}
-                className="flex-grow resize-none bg-background focus-visible:ring-primary"
+                placeholder="Describe the task (e.g., 'Plan a weekend trip to the mountains')"
+                rows={1}
+                className="flex-grow resize-none min-h-[42px] max-h-[150px] text-sm bg-background focus-visible:ring-primary rounded-lg"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
@@ -135,7 +212,7 @@ export const OrchestrationCenter: React.FC<OrchestrationCenterProps> = ({ tools,
                 }}
                 disabled={isProcessing}
               />
-              <Button onClick={handleSendMessage} disabled={isProcessing || !userInput.trim()} size="icon" className="h-auto p-3 shrink-0">
+              <Button onClick={handleSendMessage} disabled={isProcessing || !userInput.trim()} size="icon" className="h-auto p-2.5 aspect-square shrink-0 rounded-lg">
                 <Send className="h-5 w-5" />
               </Button>
             </div>
@@ -144,35 +221,33 @@ export const OrchestrationCenter: React.FC<OrchestrationCenterProps> = ({ tools,
       </Card>
 
       <Card className="shadow-xl border-border">
-        <CardHeader className="border-b">
+        <CardHeader className="border-b p-4">
           <CardTitle className="text-xl flex items-center">
             <PlayCircle className="mr-3 h-6 w-6 text-primary" />
             Quick Access
           </CardTitle>
         </CardHeader>
         <CardContent className="p-4">
-          <div className="mb-4">
-            <h4 className="font-semibold mb-2 text-md">Launch a Specific Tool</h4>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+            <h4 className="font-semibold mb-3 text-md">Launch a Specific Tool</h4>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
               {quickAccessTools.map(tool => (
-                <Button key={tool.id} variant="outline" className="flex-col h-auto p-3 justify-start items-start text-left" onClick={() => onSelectTool(tool)}>
-                  <tool.icon className="h-5 w-5 mb-1.5 text-primary" />
+                <Button key={tool.id} variant="outline" className="flex-col h-auto p-3.5 justify-start items-start text-left hover:bg-accent/50" onClick={() => onSelectTool(tool)}>
+                  <tool.icon className="h-5 w-5 mb-2 text-primary" />
                   <span className="text-sm font-medium">{tool.name}</span>
-                  <span className="text-xs text-muted-foreground truncate w-full">{tool.description}</span>
+                  <span className="text-xs text-muted-foreground truncate w-full mt-0.5">{tool.description}</span>
                 </Button>
               ))}
-              <Button variant="outline" className="flex-col h-auto p-3 justify-start items-start text-left" onClick={() => alert('Add MCP Server dialog would appear here.')}>
-                  <PlugZap className="h-5 w-5 mb-1.5 text-primary" />
+              <Button variant="outline" className="flex-col h-auto p-3.5 justify-start items-start text-left hover:bg-accent/50" onClick={() => alert('Add MCP Server dialog would appear here.')}>
+                  <PlugZap className="h-5 w-5 mb-2 text-primary" />
                   <span className="text-sm font-medium">Add MCP Server</span>
-                   <span className="text-xs text-muted-foreground">Connect a new server</span>
+                   <span className="text-xs text-muted-foreground truncate w-full mt-0.5">Connect a new server</span>
               </Button>
-              <Button variant="outline" className="flex-col h-auto p-3 justify-start items-start text-left" onClick={() => alert('Show all tools modal or navigate to a full tool list.')}>
-                  <ExternalLink className="h-5 w-5 mb-1.5 text-muted-foreground" />
+              <Button variant="outline" className="flex-col h-auto p-3.5 justify-start items-start text-left hover:bg-accent/50" onClick={() => alert('Show all tools modal or navigate to a full tool list.')}>
+                  <ExternalLink className="h-5 w-5 mb-2 text-muted-foreground" />
                   <span className="text-sm font-medium">View All Tools</span>
-                   <span className="text-xs text-muted-foreground">Explore full capabilities</span>
+                   <span className="text-xs text-muted-foreground truncate w-full mt-0.5">Explore capabilities</span>
               </Button>
             </div>
-          </div>
         </CardContent>
       </Card>
     </div>
