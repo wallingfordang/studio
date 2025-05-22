@@ -15,16 +15,22 @@ import { Toaster } from '@/components/ui/toaster';
 import { Dock } from '@/components/cognicanvas/dock';
 import { Space } from '@/components/cognicanvas/space';
 import type { ActiveToolInstance, Tool } from '@/components/cognicanvas/types';
-import { ALL_TOOLS } from '@/components/cognicanvas/constants';
+import { ALL_TOOLS } from '@/components/cognicanvas/constants.tsx';
 import { ThemeSwitcher } from '@/components/cognicanvas/theme-switcher';
 import { Button } from '@/components/ui/button';
 import { HelpCircle, Bot } from 'lucide-react';
 
 // A small component to handle the sidebar trigger within the provider context
 const CustomSidebarTrigger = () => {
-  const { toggleSidebar } = useSidebar();
+  // const { toggleSidebar } = useSidebar(); // SidebarTrigger handles its own toggling
   return (
-    <Button variant="ghost" size="icon" onClick={toggleSidebar} className="h-8 w-8 data-[state=open]:bg-accent data-[state=open]:text-accent-foreground">
+    <Button
+      asChild // Use asChild to pass props to SidebarTrigger
+      variant="ghost"
+      size="icon"
+      // onClick={toggleSidebar} // Remove: SidebarTrigger already calls toggleSidebar
+      className="h-8 w-8 data-[state=open]:bg-accent data-[state=open]:text-accent-foreground"
+    >
       <SidebarTrigger />
     </Button>
   );
@@ -117,8 +123,6 @@ export default function CogniCanvasLayout() {
           <Space activeToolInstance={activeToolInstance} onContentChange={handleContentChange} />
         </SidebarInset>
 
-        {/* Global Agent Stream Sidebar and Smart Suggestions are removed as per new requirements.
-            They will be integrated into each tool's component. */}
       </div>
       <Toaster />
     </SidebarProvider>
