@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
-import { Server, Search, PlugZap, Wifi, WifiOff, HelpCircle, Briefcase } from 'lucide-react';
+import { Server, Search, PlugZap, Wifi, WifiOff, HelpCircle, Briefcase, Terminal, Lightbulb, Brain, MessageSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface McpServerInfo {
@@ -23,17 +23,93 @@ interface McpServerInfo {
   name: string;
   description: string;
   status: 'Online' | 'Offline' | 'Experimental';
-  type: 'Official' | 'Community' | 'Private';
+  type: 'Official' | 'Community' | 'Private' | 'Utility';
   region: string;
+  tags?: string[];
+  icon?: React.ElementType;
 }
 
 const MOCK_MCP_SERVERS: McpServerInfo[] = [
-  { id: 'mcp-us-west-1', name: 'Nexus Prime (US West)', description: 'General purpose MCP server with balanced capabilities.', status: 'Online', type: 'Official', region: 'US West' },
-  { id: 'mcp-eu-central-1', name: 'Orion-EU (EU Central)', description: 'High-performance server for compute-intensive tasks.', status: 'Online', type: 'Official', region: 'EU Central' },
-  { id: 'mcp-asia-east-1', name: 'Cygnus-AI (Asia East)', description: 'Specialized in advanced AI model hosting.', status: 'Offline', type: 'Official', region: 'Asia East' },
-  { id: 'community-forge', name: 'Community Forge', description: 'Open-source community-run MCP server.', status: 'Online', type: 'Community', region: 'Global' },
-  { id: 'dev-sandbox-local', name: 'Dev Sandbox (Local)', description: 'Your personal development and testing server.', status: 'Experimental', type: 'Private', region: 'Localhost' },
-  { id: 'quantum-leap-beta', name: 'Quantum Leap (Beta)', description: 'Experimental server with next-gen quantum AI features.', status: 'Experimental', type: 'Official', region: 'Undisclosed' },
+  { 
+    id: 'desktop-commander', 
+    name: 'Desktop Commander (@wonderwhy-er)', 
+    description: 'Execute terminal commands and manage files with diff editing. For coding, shell, terminal, and task automation.', 
+    status: 'Online', 
+    type: 'Private', 
+    region: 'Local',
+    tags: ['Coding', 'Shell', 'Automation', 'Files'],
+    icon: Terminal,
+  },
+  { 
+    id: 'sequential-thinking', 
+    name: 'Sequential Thinking (@smithery-ai)', 
+    description: 'An MCP server for dynamic and reflective problem-solving through a structured thinking process.', 
+    status: 'Online', 
+    type: 'Official', 
+    region: 'Remote',
+    tags: ['Problem Solving', 'AI', 'Reflection'],
+    icon: Brain,
+  },
+  { 
+    id: 'toolbox', 
+    name: 'Toolbox (@smithery)', 
+    description: 'Dynamically routes to all MCPs in Smithery registry. Prompts for configuration when needed. Recommended for Claude Desktop.', 
+    status: 'Online', 
+    type: 'Utility', 
+    region: 'Remote',
+    tags: ['Routing', 'Registry', 'Claude'],
+    icon: Briefcase,
+  },
+  { 
+    id: 'context7', 
+    name: 'Context7 (@upstash)', 
+    description: "Fetch up-to-date, version-specific documentation & code examples. Add 'use context7' to questions.", 
+    status: 'Online', 
+    type: 'Official', 
+    region: 'Remote',
+    tags: ['Documentation', 'Coding', 'Context'],
+    icon: Lightbulb,
+  },
+  { 
+    id: 'mcp-us-west-1', 
+    name: 'Nexus Prime (US West)', 
+    description: 'General purpose MCP server with balanced capabilities.', 
+    status: 'Online', 
+    type: 'Official', 
+    region: 'US West',
+    tags: ['General', 'Cloud'],
+    icon: Server,
+  },
+  { 
+    id: 'mcp-eu-central-1', 
+    name: 'Orion-EU (EU Central)', 
+    description: 'High-performance server for compute-intensive tasks.', 
+    status: 'Online', 
+    type: 'Official', 
+    region: 'EU Central',
+    tags: ['High Performance', 'Compute'],
+    icon: Server,
+  },
+  { 
+    id: 'mcp-asia-east-1', 
+    name: 'Cygnus-AI (Asia East)', 
+    description: 'Specialized in advanced AI model hosting.', 
+    status: 'Offline', 
+    type: 'Official', 
+    region: 'Asia East',
+    tags: ['AI Models', 'Specialized'],
+    icon: Server,
+  },
+  { 
+    id: 'community-forge', 
+    name: 'Community Forge', 
+    description: 'Open-source community-run MCP server for various agent tasks.', 
+    status: 'Online', 
+    type: 'Community', 
+    region: 'Global',
+    tags: ['Open Source', 'Community'],
+    icon: MessageSquare,
+  },
 ];
 
 interface AddMcpServerModalProps {
@@ -52,7 +128,8 @@ export const AddMcpServerModal: React.FC<AddMcpServerModalProps> = ({ isOpen, on
       server.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       server.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
       server.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      server.region.toLowerCase().includes(searchTerm.toLowerCase())
+      server.region.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (server.tags && server.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase())))
     );
   }, [searchTerm]);
 
@@ -69,16 +146,22 @@ export const AddMcpServerModal: React.FC<AddMcpServerModalProps> = ({ isOpen, on
     }
   };
 
-  const getTypeIcon = (type: McpServerInfo['type']) => {
+  const getTypeIcon = (type: McpServerInfo['type'], customIcon?: React.ElementType) => {
+    if (customIcon) {
+      const IconComponent = customIcon;
+      return <IconComponent className="h-5 w-5 text-primary" />;
+    }
     switch (type) {
         case 'Official':
-            return <Briefcase className="h-4 w-4 text-blue-500" />;
+            return <Briefcase className="h-5 w-5 text-blue-500" />;
         case 'Community':
-            return <Server className="h-4 w-4 text-purple-500" />; // Changed Users to Server
+            return <MessageSquare className="h-5 w-5 text-purple-500" />;
         case 'Private':
-            return <Server className="h-4 w-4 text-gray-500" />;
+            return <Terminal className="h-5 w-5 text-gray-500" />;
+        case 'Utility':
+            return <Server className="h-5 w-5 text-teal-500" />;
         default:
-            return <Server className="h-4 w-4 text-muted-foreground" />;
+            return <Server className="h-5 w-5 text-muted-foreground" />;
     }
   };
 
@@ -116,7 +199,7 @@ export const AddMcpServerModal: React.FC<AddMcpServerModalProps> = ({ isOpen, on
                   <CardHeader className="pb-3">
                     <div className="flex justify-between items-start">
                       <div className="flex items-center gap-2">
-                        {getTypeIcon(server.type)}
+                        {getTypeIcon(server.type, server.icon)}
                         <CardTitle className="text-base font-semibold">{server.name}</CardTitle>
                       </div>
                       <div className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -124,16 +207,23 @@ export const AddMcpServerModal: React.FC<AddMcpServerModalProps> = ({ isOpen, on
                         <span>{server.status}</span>
                       </div>
                     </div>
-                    <CardDescription className="text-xs pt-1">{server.region}</CardDescription>
+                    <CardDescription className="text-xs pt-1">{server.region} &bull; {server.type}</CardDescription>
                   </CardHeader>
-                  <CardContent className="text-sm text-muted-foreground flex-grow pb-4">
+                  <CardContent className="text-sm text-muted-foreground flex-grow pb-3">
                     {server.description}
+                    {server.tags && server.tags.length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        {server.tags.map(tag => (
+                          <span key={tag} className="px-2 py-0.5 text-xs bg-muted text-muted-foreground rounded-full">{tag}</span>
+                        ))}
+                      </div>
+                    )}
                   </CardContent>
                   <CardFooter className="pt-0 pb-4">
                     <Button 
                       variant="outline" 
                       className="w-full" 
-                      onClick={() => alert(`Connect to ${server.name} would be initiated.`)}
+                      onClick={() => alert(`Connect to ${server.name} would be initiated.`)} // Using alert for demo
                       disabled={server.status === 'Offline'}
                     >
                       Connect
@@ -162,4 +252,3 @@ export const AddMcpServerModal: React.FC<AddMcpServerModalProps> = ({ isOpen, on
     </Dialog>
   );
 };
-
