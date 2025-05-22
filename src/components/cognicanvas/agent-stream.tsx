@@ -17,6 +17,11 @@ interface AgentStreamProps {
   onContentUpdate: (newContent: string) => void;
 }
 
+// Helper to generate more unique IDs
+const generateUniqueId = () => {
+  return `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+};
+
 export const AgentStream: React.FC<AgentStreamProps> = ({ activeTool, currentContent, onContentUpdate }) => {
   const [messages, setMessages] = useState<AgentMessage[]>([]);
   const [input, setInput] = useState('');
@@ -36,7 +41,7 @@ export const AgentStream: React.FC<AgentStreamProps> = ({ activeTool, currentCon
 
   useEffect(() => {
     setMessages([
-      { id: Date.now().toString(), type: 'agent', content: `Agent ready for ${activeTool.name}. How can I assist?`, timestamp: new Date() }
+      { id: generateUniqueId(), type: 'agent', content: `Agent ready for ${activeTool.name}. How can I assist?`, timestamp: new Date() }
     ]);
     setInput('');
     // Reset previous content ref when tool changes to avoid unintended undos
@@ -44,7 +49,7 @@ export const AgentStream: React.FC<AgentStreamProps> = ({ activeTool, currentCon
   }, [activeTool, currentContent]); // Added currentContent to dependencies for document-processor
 
   const addMessage = useCallback((type: AgentMessage['type'], content: string, previewData?: any) => {
-    setMessages(prev => [...prev, { id: Date.now().toString(), type, content, timestamp: new Date(), previewData }]);
+    setMessages(prev => [...prev, { id: generateUniqueId(), type, content, timestamp: new Date(), previewData }]);
   }, []);
 
   const handleSendMessage = useCallback(async () => {
