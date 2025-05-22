@@ -19,7 +19,7 @@ import { ALL_TOOLS } from '@/components/cognicanvas/constants.tsx';
 import { ThemeSwitcher } from '@/components/cognicanvas/theme-switcher';
 import { Button } from '@/components/ui/button';
 import { HelpCircle, Bot } from 'lucide-react';
-import { TutorialModal } from '@/components/cognicanvas/tutorial-modal'; // Added import
+import { TutorialModal } from '@/components/cognicanvas/tutorial-modal';
 
 // A small component to handle the sidebar trigger within the provider context
 const CustomSidebarTrigger = () => {
@@ -39,12 +39,12 @@ const CustomSidebarTrigger = () => {
 export default function AgentComputerLayout() {
   const [activeToolInstance, setActiveToolInstance] = useState<ActiveToolInstance | null>(null);
   const [documentContent, setDocumentContent] = useState<string>(''); 
-  const [isTutorialModalOpen, setIsTutorialModalOpen] = useState(false); // State for tutorial modal
+  const [isTutorialModalOpen, setIsTutorialModalOpen] = useState(false);
 
   const openTool = useCallback((tool: Tool) => {
     const newInstance: ActiveToolInstance = {
       ...tool,
-      instanceId: `${tool.id}-${Date.now()}`,
+      instanceId: `${tool.id}-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`, // Added more uniqueness
       windowState: 'default',
       content: tool.id === 'document-processor' ? documentContent : undefined,
     };
@@ -61,14 +61,19 @@ export default function AgentComputerLayout() {
   }, [activeToolInstance]);
 
   const handleTutorial = () => {
-    setIsTutorialModalOpen(true); // Open the modal
+    setIsTutorialModalOpen(true);
   };
   
-  const [defaultSidebarOpen, setDefaultSidebarOpen] = React.useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = React.useState(true); // For controlled sidebar
+  const [hasMounted, setHasMounted] = React.useState(false);
+
   useEffect(() => {
+    setHasMounted(true); // Indicate client has mounted
     const mediaQuery = window.matchMedia('(max-width: 768px)');
-    const handleResize = () => setDefaultSidebarOpen(!mediaQuery.matches);
-    handleResize(); 
+    const handleResize = () => {
+      setIsSidebarOpen(!mediaQuery.matches); // Desktop open, mobile closed by default after mount
+    };
+    handleResize(); // Set initial state based on client's screen size after mount
     mediaQuery.addEventListener('change', handleResize);
     return () => mediaQuery.removeEventListener('change', handleResize);
   }, []);
@@ -79,7 +84,10 @@ export default function AgentComputerLayout() {
 
 
   return (
-    <SidebarProvider defaultOpen={defaultSidebarOpen}>
+    <SidebarProvider
+      open={hasMounted ? isSidebarOpen : true} // Controlled: use responsive state after mount, default to true for SSR
+      onOpenChange={setIsSidebarOpen} // Controlled
+    >
       <div className="flex h-screen w-screen overflow-hidden bg-background">
         <Sidebar
           side="left"
@@ -120,7 +128,7 @@ export default function AgentComputerLayout() {
         </SidebarInset>
       </div>
       <Toaster />
-      <TutorialModal isOpen={isTutorialModalOpen} onOpenChange={setIsTutorialModalOpen} /> {/* Added TutorialModal */}
+      <TutorialModal isOpen={isTutorialModalOpen} onOpenChange={setIsTutorialModalOpen} />
     </SidebarProvider>
   );
 }
