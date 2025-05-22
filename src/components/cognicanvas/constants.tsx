@@ -10,13 +10,12 @@ import { CommsHub } from './tools/comms-hub';
 import { CreativeSuite } from './tools/creative-suite';
 import { CodeEditor } from './tools/code-editor';
 import { GameCenter } from './tools/game-center';
-import { SettingsTool } from './tools/settings-tool'; // Renamed from Settings to SettingsTool to avoid conflict
+import { SettingsTool } from './tools/settings-tool';
 import React from 'react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
-// Generic placeholder component for tools not yet implemented
-// This can be removed or kept for future tools that might start as placeholders.
-// For now, all listed tools will have a basic component.
+// Generic placeholder component for tools not yet implemented or for future use.
+// Current tools in ALL_TOOLS use their specific components which might themselves be placeholders.
 const PlaceholderToolComponent: React.FC<ToolProps> = ({ tool }) => (
   <div className="h-full flex flex-col shadow-xl rounded-lg overflow-hidden border-border bg-card">
     <div className="bg-card border-b p-4">
@@ -27,11 +26,11 @@ const PlaceholderToolComponent: React.FC<ToolProps> = ({ tool }) => (
     </div>
     <div className="flex-grow flex flex-row overflow-hidden">
       <div className="flex-grow flex flex-col items-center justify-center h-full p-8 bg-card text-muted-foreground">
-        <HelpCircle className="w-16 h-16 mb-4 text-primary/30" />
+        <tool.icon className="w-16 h-16 mb-4 text-primary/30" />
         <h2 className="text-xl font-semibold mb-2 text-foreground">{tool.name}</h2>
         <p className="text-center">This tool is under development. Stay tuned!</p>
       </div>
-      {/* Placeholder Agent Stream + Smart Suggestions part */}
+      {/* Placeholder Agent Stream + Smart Suggestions part (Simulated for Placeholder) */}
       <div className="w-[340px] md:w-[380px] lg:w-[420px] border-l border-border flex flex-col bg-sidebar text-sidebar-foreground shrink-0">
         {/* Placeholder Agent Stream */}
         <div className="flex-grow p-3 space-y-3 overflow-auto">
@@ -46,7 +45,6 @@ const PlaceholderToolComponent: React.FC<ToolProps> = ({ tool }) => (
                 Agent for {tool.name} is ready. How can I help?
               </div>
             </div>
-          </div>
            <div className="text-xs text-muted-foreground italic w-full text-center py-1 px-2">
             Interaction with this agent is simulated.
           </div>
@@ -59,8 +57,8 @@ const PlaceholderToolComponent: React.FC<ToolProps> = ({ tool }) => (
                     className="flex-grow resize-none min-h-[40px] max-h-[120px] text-sm bg-card focus-visible:ring-primary rounded-md p-2 border border-input"
                     disabled
                 />
-                <button className="h-10 w-10 shrink-0 rounded-full bg-primary text-primary-foreground flex items-center justify-center opacity-50 cursor-not-allowed">
-                    <Send className="h-4 w-4" />
+                <button className="h-10 w-10 shrink-0 rounded-full bg-primary text-primary-foreground flex items-center justify-center opacity-50 cursor-not-allowed" disabled>
+                     <Send className="h-4 w-4" />
                 </button>
             </div>
         </div>
@@ -101,7 +99,7 @@ export const ALL_TOOLS: Tool[] = [
     id: 'comms-hub',
     name: 'Comms Hub',
     icon: MessageSquare,
-    description: 'Integrated email, calendar, and messenger.',
+    description: 'Integrated email, calendar, and messenger. (Placeholder UI)',
     component: CommsHub,
     category: 'Communication',
   },
@@ -109,7 +107,7 @@ export const ALL_TOOLS: Tool[] = [
     id: 'creative-suite',
     name: 'Creative Suite',
     icon: ImageIcon,
-    description: 'Tools for image generation and editing.',
+    description: 'Tools for image generation and editing. (Placeholder UI)',
     component: CreativeSuite,
     category: 'Creative',
   },
@@ -117,7 +115,7 @@ export const ALL_TOOLS: Tool[] = [
     id: 'task-manager',
     name: 'Task Manager',
     icon: ListChecks,
-    description: 'AI-assisted task planning and tracking.',
+    description: 'AI-assisted task planning and tracking. (Placeholder UI)',
     component: TaskManager,
     category: 'Productivity',
   },
@@ -125,7 +123,7 @@ export const ALL_TOOLS: Tool[] = [
     id: 'spreadsheet-tool',
     name: 'Spreadsheet Tool',
     icon: Table,
-    description: 'Data organization, calculation, and visualization.',
+    description: 'Data organization, calculation, and visualization. (Placeholder UI)',
     component: SpreadsheetTool,
     category: 'Productivity',
   },
@@ -133,7 +131,7 @@ export const ALL_TOOLS: Tool[] = [
     id: 'presentation-builder',
     name: 'Presentation Builder',
     icon: Presentation,
-    description: 'Create slideshows with AI assistance.',
+    description: 'Create slideshows with AI assistance. (Placeholder UI)',
     component: PresentationBuilder,
     category: 'Productivity',
   },
@@ -141,7 +139,7 @@ export const ALL_TOOLS: Tool[] = [
     id: 'code-editor',
     name: 'Code Editor',
     icon: Code,
-    description: 'View and make minor edits to code snippets.',
+    description: 'View and make minor edits to code snippets. (Placeholder UI)',
     component: CodeEditor,
     category: 'Development',
   },
@@ -149,15 +147,15 @@ export const ALL_TOOLS: Tool[] = [
     id: 'game-center',
     name: 'Game Center',
     icon: Gamepad2,
-    description: 'Access to casual games.',
+    description: 'Access to casual games. (Placeholder UI)',
     component: GameCenter,
     category: 'Entertainment',
   },
   {
     id: 'settings',
     name: 'Settings',
-    icon: SettingsIcon, // Using the aliased SettingsIcon
-    description: 'Customize your Agent-Computer experience.',
+    icon: SettingsIcon,
+    description: 'Customize your Agent-Computer experience. (Placeholder UI)',
     component: SettingsTool,
     category: 'System',
   },
