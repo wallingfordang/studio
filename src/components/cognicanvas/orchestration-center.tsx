@@ -7,9 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Bot, Send, PlayCircle, PlugZap, Sparkles, MessageSquare, Loader2, PlusCircle } from 'lucide-react';
+import { Bot, Send, Sparkles, MessageSquare, Loader2 } from 'lucide-react';
 import { orchestrateTask, type OrchestrateTaskInput, type ToolInfo } from '@/ai/flows/orchestrate-task-flow';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'; // Ensure Avatar components are imported
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 interface OrchestrationCenterProps {
   tools: Tool[];
@@ -41,7 +41,6 @@ export const OrchestrationCenter: React.FC<OrchestrationCenterProps> = ({ tools,
   const scrollViewportRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-
   useEffect(() => {
     setClientReady(true);
   }, []);
@@ -52,7 +51,7 @@ export const OrchestrationCenter: React.FC<OrchestrationCenterProps> = ({ tools,
         { id: generateUniqueId() + '-initial-agent', sender: 'agent', text: `Hello ${userName}, I'm your Orchestration Agent. How can I help you orchestrate a task or project today?`, timestamp: new Date() }
       ]);
     }
-  }, [userName, clientReady, conversation.length]);
+  }, [userName, clientReady]);
 
 
   const scrollToBottom = useCallback(() => {
@@ -124,13 +123,9 @@ export const OrchestrationCenter: React.FC<OrchestrationCenterProps> = ({ tools,
     setUserInput(''); 
   };
   
-  const quickAccessTools = tools.filter(tool => 
-    tool.category === 'Productivity' || tool.category === 'Creative' || tool.category === 'Communication'
-  );
-
   return (
-    <div className="grid grid-rows-[minmax(0,1fr)_auto] h-full p-4 md:p-6 lg:p-8 bg-background text-foreground overflow-hidden gap-6 lg:gap-8">
-      <Card className="shadow-xl border-border flex flex-col min-h-0"> {/* Chat Card */}
+    <div className="flex flex-col h-full p-4 md:p-6 lg:p-8 bg-background text-foreground overflow-hidden">
+      <Card className="shadow-xl border-border flex flex-col flex-grow min-h-0"> {/* Chat Card takes all available space */}
         <CardHeader className="border-b p-4">
           <CardTitle className="text-xl flex items-center">
             <Sparkles className="mr-3 h-6 w-6 text-primary" />
@@ -139,7 +134,7 @@ export const OrchestrationCenter: React.FC<OrchestrationCenterProps> = ({ tools,
         </CardHeader>
         <CardContent className="p-0 flex-grow flex flex-col overflow-hidden">
           <ScrollArea className="flex-grow" viewportRef={scrollViewportRef}>
-            <div className="p-6 space-y-4"> {/* Increased padding here for chat messages */}
+            <div className="p-6 space-y-4">
               {conversation.map((msg) => (
                 <div key={msg.id} className={`flex w-full ${msg.sender === 'user' ? 'justify-end' : 'justify-start'} ${msg.sender === 'log' ? 'my-1' : 'my-2'}`}>
                   {msg.sender === 'agent' && (
@@ -222,41 +217,6 @@ export const OrchestrationCenter: React.FC<OrchestrationCenterProps> = ({ tools,
           </div>
         </CardContent>
       </Card>
-
-      <Card className="shadow-xl border-border shrink-0"> {/* Quick Access Card */}
-        <CardHeader className="border-b p-4">
-          <CardTitle className="text-xl flex items-center">
-            <PlayCircle className="mr-3 h-6 w-6 text-primary" />
-            Quick Access
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-4">
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
-              {quickAccessTools.map(tool => (
-                <Button 
-                  key={tool.id} 
-                  variant="outline" 
-                  className="flex-col items-center justify-center h-auto p-2.5 text-center hover:bg-accent/50" 
-                  onClick={() => onSelectTool(tool)}
-                  title={tool.description}
-                >
-                  <tool.icon className="h-5 w-5 mb-1.5 text-primary" />
-                  <span className="text-xs font-medium">{tool.name}</span>
-                </Button>
-              ))}
-              <Button 
-                variant="outline" 
-                className="flex-col items-center justify-center h-auto p-2.5 text-center hover:bg-accent/50" 
-                onClick={() => alert('Add MCP Server dialog would appear here.')}
-                title="Connect a new server instance"
-              >
-                  <PlugZap className="h-5 w-5 mb-1.5 text-primary" />
-                  <span className="text-xs font-medium">Add Server</span>
-              </Button>
-            </div>
-        </CardContent>
-      </Card>
     </div>
   );
-
     
