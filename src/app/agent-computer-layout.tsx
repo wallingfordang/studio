@@ -19,6 +19,7 @@ import { ALL_TOOLS } from '@/components/cognicanvas/constants.tsx';
 import { ThemeSwitcher } from '@/components/cognicanvas/theme-switcher';
 import { Button } from '@/components/ui/button';
 import { HelpCircle, Bot } from 'lucide-react';
+import { TutorialModal } from '@/components/cognicanvas/tutorial-modal'; // Added import
 
 // A small component to handle the sidebar trigger within the provider context
 const CustomSidebarTrigger = () => {
@@ -38,6 +39,7 @@ const CustomSidebarTrigger = () => {
 export default function AgentComputerLayout() {
   const [activeToolInstance, setActiveToolInstance] = useState<ActiveToolInstance | null>(null);
   const [documentContent, setDocumentContent] = useState<string>(''); 
+  const [isTutorialModalOpen, setIsTutorialModalOpen] = useState(false); // State for tutorial modal
 
   const openTool = useCallback((tool: Tool) => {
     const newInstance: ActiveToolInstance = {
@@ -49,16 +51,6 @@ export default function AgentComputerLayout() {
     setActiveToolInstance(newInstance);
   }, [documentContent]);
 
-  // Removed the useEffect that defaulted to document-processor to allow Orchestration Center to show first
-  // useEffect(() => {
-  //   const defaultTool = ALL_TOOLS.find(t => t.id === 'document-processor');
-  //   if (defaultTool && !activeToolInstance) {
-  //     openTool(defaultTool);
-  //   }
-  // // eslint-disable-next-line react-hooks/exhaustive-deps
-  // }, []); 
-
-
   const handleContentChange = useCallback((newContent: string) => {
     if (activeToolInstance?.id === 'document-processor') {
       setDocumentContent(newContent);
@@ -69,7 +61,7 @@ export default function AgentComputerLayout() {
   }, [activeToolInstance]);
 
   const handleTutorial = () => {
-    alert("Welcome to Agent-Computer!\n\n- Use the Dock on the left to select tools.\n- The Main Page (Orchestration Center) helps you plan complex tasks.\n- Each tool has its own integrated AI Agent and Smart Suggestions.\n\nThis is a brief overview. More detailed tutorials coming soon!");
+    setIsTutorialModalOpen(true); // Open the modal
   };
   
   const [defaultSidebarOpen, setDefaultSidebarOpen] = React.useState(true);
@@ -82,7 +74,7 @@ export default function AgentComputerLayout() {
   }, []);
 
   const navigateToOrchestrationCenter = () => {
-    setActiveToolInstance(null); // Setting active tool to null shows the Orchestration Center
+    setActiveToolInstance(null); 
   };
 
 
@@ -126,11 +118,9 @@ export default function AgentComputerLayout() {
             onSelectTool={openTool}
           />
         </SidebarInset>
-
       </div>
       <Toaster />
+      <TutorialModal isOpen={isTutorialModalOpen} onOpenChange={setIsTutorialModalOpen} /> {/* Added TutorialModal */}
     </SidebarProvider>
   );
 }
-
-    
