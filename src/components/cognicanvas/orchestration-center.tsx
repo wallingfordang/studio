@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Bot, Send, PlayCircle, History, ExternalLink, PlusCircle, Server } from 'lucide-react';
+import { Bot, Send, PlayCircle, ExternalLink, PlugZap } from 'lucide-react'; // Added PlugZap
 
 interface OrchestrationCenterProps {
   tools: Tool[];
@@ -69,7 +69,7 @@ export const OrchestrationCenter: React.FC<OrchestrationCenterProps> = ({ tools,
     }, 1500);
   };
   
-  const quickAccessTools = tools.filter(tool => tool.category === 'Productivity' || tool.category === 'Creative').slice(0, 3); // Adjusted slice to make space for "Add MCP"
+  const quickAccessTools = tools.filter(tool => tool.category === 'Productivity' || tool.category === 'Creative');
 
   return (
     <div className="flex flex-col h-full p-4 md:p-6 lg:p-8 bg-background text-foreground overflow-y-auto space-y-6 lg:space-y-8">
@@ -142,29 +142,16 @@ export const OrchestrationCenter: React.FC<OrchestrationCenterProps> = ({ tools,
                   <span className="text-xs text-muted-foreground truncate w-full">{tool.description}</span>
                 </Button>
               ))}
-               <Button variant="outline" className="flex-col h-auto p-3 justify-start items-start text-left" onClick={() => alert('Show all tools modal or navigate to a full tool list.')}>
+              <Button variant="outline" className="flex-col h-auto p-3 justify-start items-start text-left" onClick={() => alert('Add MCP Server dialog would appear here.')}>
+                  <PlugZap className="h-5 w-5 mb-1.5 text-primary" />
+                  <span className="text-sm font-medium">Add MCP Server</span>
+                   <span className="text-xs text-muted-foreground">Connect a new server</span>
+              </Button>
+              <Button variant="outline" className="flex-col h-auto p-3 justify-start items-start text-left" onClick={() => alert('Show all tools modal or navigate to a full tool list.')}>
                   <ExternalLink className="h-5 w-5 mb-1.5 text-muted-foreground" />
                   <span className="text-sm font-medium">View All Tools</span>
                    <span className="text-xs text-muted-foreground">Explore full capabilities</span>
-                </Button>
-            </div>
-          </div>
-          <div>
-            <h4 className="font-semibold mb-2 text-md">Session & System</h4>
-            <div className="flex flex-wrap gap-3">
-                <Button variant="outline" onClick={() => alert('Restoring last session...')}>
-                    <History className="mr-2 h-4 w-4" /> Restore Last Session
-                </Button>
-                <Button variant="outline" onClick={() => alert('Add MCP Server dialog would appear here.')}>
-                    <PlusCircle className="mr-2 h-4 w-4" /> Add MCP Server
-                </Button>
-                 <Button variant="outline" onClick={() => {
-                    const settingsTool = tools.find(t => t.id === 'settings');
-                    if (settingsTool) onSelectTool(settingsTool);
-                    else alert('Settings tool not found.');
-                 }}>
-                    <Server className="mr-2 h-4 w-4" /> Manage Servers
-                </Button>
+              </Button>
             </div>
           </div>
         </CardContent>
