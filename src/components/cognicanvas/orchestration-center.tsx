@@ -7,8 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'; // Added ScrollBar
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Bot, Send, PlayCircle, ExternalLink, PlugZap, Sparkles, MessageSquare, Loader2 } from 'lucide-react';
+import { Bot, Send, PlayCircle, ExternalLink, PlugZap, Sparkles, MessageSquare, Loader2, PlusCircle } from 'lucide-react';
 import { orchestrateTask, type OrchestrateTaskInput, type ToolInfo } from '@/ai/flows/orchestrate-task-flow';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'; // Added this import
 
 interface OrchestrationCenterProps {
   tools: Tool[];
@@ -72,7 +73,7 @@ export const OrchestrationCenter: React.FC<OrchestrationCenterProps> = ({ tools,
     addMessage('user', currentInput);
     setUserInput('');
     setIsProcessing(true);
-    setCurrentPlan(null); // Clear previous plan
+    setCurrentPlan(null); 
 
     addMessage('log', 'Orchestration Agent is analyzing your request...');
 
@@ -113,13 +114,13 @@ export const OrchestrationCenter: React.FC<OrchestrationCenterProps> = ({ tools,
         addMessage('agent', `Sorry, I couldn't find the first tool in the plan: ${firstToolId}.`);
       }
     }
-    setCurrentPlan(null); // Clear plan after attempting execution
+    setCurrentPlan(null); 
   };
 
   const handleRefineTask = () => {
     addMessage('agent', "Okay, please rephrase your task or provide more details for a new plan.");
     setCurrentPlan(null);
-    setUserInput(''); // Clear input for new goal
+    setUserInput(''); 
   };
   
   const quickAccessTools = tools.filter(tool => 
@@ -128,14 +129,14 @@ export const OrchestrationCenter: React.FC<OrchestrationCenterProps> = ({ tools,
 
   return (
     <div className="flex flex-col h-full p-4 md:p-6 lg:p-8 bg-background text-foreground overflow-hidden space-y-6 lg:space-y-8">
-      <Card className="shadow-xl border-border flex flex-col flex-grow min-h-0"> {/* Added min-h-0 for flex child */}
+      <Card className="shadow-xl border-border flex flex-col flex-grow min-h-0">
         <CardHeader className="border-b p-4">
           <CardTitle className="text-xl flex items-center">
             <Sparkles className="mr-3 h-6 w-6 text-primary" />
             Orchestration Agent
           </CardTitle>
         </CardHeader>
-        <CardContent className="p-0 flex-grow flex flex-col overflow-hidden"> {/* Added overflow-hidden */}
+        <CardContent className="p-0 flex-grow flex flex-col overflow-hidden">
           <ScrollArea className="flex-grow" viewportRef={scrollViewportRef}>
             <div className="p-4 space-y-4">
               {conversation.map((msg) => (
@@ -253,3 +254,5 @@ export const OrchestrationCenter: React.FC<OrchestrationCenterProps> = ({ tools,
     </div>
   );
 };
+
+
