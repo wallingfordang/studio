@@ -5,11 +5,11 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import type { Tool } from './types';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'; // Added ScrollBar
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Bot, Send, PlayCircle, ExternalLink, PlugZap, Sparkles, MessageSquare, Loader2, PlusCircle } from 'lucide-react';
+import { Bot, Send, PlayCircle, PlugZap, Sparkles, MessageSquare, Loader2, PlusCircle } from 'lucide-react';
 import { orchestrateTask, type OrchestrateTaskInput, type ToolInfo } from '@/ai/flows/orchestrate-task-flow';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'; // Added this import
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 interface OrchestrationCenterProps {
   tools: Tool[];
@@ -39,6 +39,8 @@ export const OrchestrationCenter: React.FC<OrchestrationCenterProps> = ({ tools,
   const [currentPlan, setCurrentPlan] = useState<{ planSteps: string[], identifiedToolIds: string[] } | null>(null);
 
   const scrollViewportRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
 
   useEffect(() => {
     setClientReady(true);
@@ -53,9 +55,7 @@ export const OrchestrationCenter: React.FC<OrchestrationCenterProps> = ({ tools,
   }, [userName, clientReady]);
 
   const scrollToBottom = useCallback(() => {
-    if (scrollViewportRef.current) {
-      scrollViewportRef.current.scrollTo({ top: scrollViewportRef.current.scrollHeight, behavior: 'smooth' });
-    }
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, []);
 
   useEffect(() => {
@@ -164,7 +164,7 @@ export const OrchestrationCenter: React.FC<OrchestrationCenterProps> = ({ tools,
                     )}
                     {msg.sender !== 'log' && (
                       <p className={`text-xs mt-1.5 ${msg.sender === 'user' ? 'text-primary-foreground/70 text-right' : 'text-muted-foreground/70'}`}>
-                        {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </p>
                     )}
                   </div>
@@ -189,6 +189,7 @@ export const OrchestrationCenter: React.FC<OrchestrationCenterProps> = ({ tools,
                     </div>
                  </div>
               )}
+              <div ref={messagesEndRef} />
             </div>
           </ScrollArea>
           {currentPlan && !isProcessing && (
@@ -221,7 +222,7 @@ export const OrchestrationCenter: React.FC<OrchestrationCenterProps> = ({ tools,
         </CardContent>
       </Card>
 
-      <Card className="shadow-xl border-border">
+      <Card className="shadow-xl border-border shrink-0">
         <CardHeader className="border-b p-4">
           <CardTitle className="text-xl flex items-center">
             <PlayCircle className="mr-3 h-6 w-6 text-primary" />
@@ -230,7 +231,7 @@ export const OrchestrationCenter: React.FC<OrchestrationCenterProps> = ({ tools,
         </CardHeader>
         <CardContent className="p-4">
             <h4 className="font-semibold mb-3 text-md">Launch a Specific Tool</h4>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
               {quickAccessTools.map(tool => (
                 <Button key={tool.id} variant="outline" className="flex-col h-auto p-3.5 justify-start items-start text-left hover:bg-accent/50" onClick={() => onSelectTool(tool)}>
                   <tool.icon className="h-5 w-5 mb-2 text-primary" />
@@ -243,11 +244,6 @@ export const OrchestrationCenter: React.FC<OrchestrationCenterProps> = ({ tools,
                   <span className="text-sm font-medium">Add MCP Server</span>
                    <span className="text-xs text-muted-foreground truncate w-full mt-0.5">Connect a new server</span>
               </Button>
-              <Button variant="outline" className="flex-col h-auto p-3.5 justify-start items-start text-left hover:bg-accent/50" onClick={() => alert('Show all tools modal or navigate to a full tool list.')}>
-                  <ExternalLink className="h-5 w-5 mb-2 text-muted-foreground" />
-                  <span className="text-sm font-medium">View All Tools</span>
-                   <span className="text-xs text-muted-foreground truncate w-full mt-0.5">Explore capabilities</span>
-              </Button>
             </div>
         </CardContent>
       </Card>
@@ -255,4 +251,4 @@ export const OrchestrationCenter: React.FC<OrchestrationCenterProps> = ({ tools,
   );
 };
 
-
+    
