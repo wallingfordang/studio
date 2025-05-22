@@ -2,24 +2,23 @@
 "use client";
 
 import type React from 'react';
-import type { ActiveToolInstance } from './types';
-import { Compass } from 'lucide-react';
+import type { ActiveToolInstance, Tool } from './types';
+import { OrchestrationCenter } from './orchestration-center'; // Import the new component
 
 interface SpaceProps {
   activeToolInstance: ActiveToolInstance | null;
   onContentChange: (content: string) => void;
+  tools: Tool[]; // Add tools array for OrchestrationCenter
+  onSelectTool: (tool: Tool) => void; // Add onSelectTool for OrchestrationCenter
 }
 
-export const Space: React.FC<SpaceProps> = ({ activeToolInstance, onContentChange }) => {
+export const Space: React.FC<SpaceProps> = ({ activeToolInstance, onContentChange, tools, onSelectTool }) => {
   if (!activeToolInstance) {
+    // If no tool is active, show the Orchestration Command Center
     return (
-      <div className="flex-grow flex flex-col items-center justify-center bg-background text-muted-foreground p-8 h-full">
-        <Compass className="w-24 h-24 text-primary/30 mb-6" strokeWidth={1}/>
-        <h2 className="text-3xl font-semibold mb-3 text-foreground tracking-tight">Welcome to Agent-Computer</h2>
-        <p className="text-center max-w-lg text-base">
-          Your intelligent workspace awaits. Select a tool from the dock on the left to begin your AI-assisted journey.
-        </p>
-      </div>
+      <main className="flex-grow bg-background overflow-auto h-full">
+        <OrchestrationCenter tools={tools} onSelectTool={onSelectTool} />
+      </main>
     );
   }
 
@@ -37,3 +36,5 @@ export const Space: React.FC<SpaceProps> = ({ activeToolInstance, onContentChang
     </main>
   );
 };
+
+    

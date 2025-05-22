@@ -22,13 +22,11 @@ import { HelpCircle, Bot } from 'lucide-react';
 
 // A small component to handle the sidebar trigger within the provider context
 const CustomSidebarTrigger = () => {
-  // const { toggleSidebar } = useSidebar(); // SidebarTrigger handles its own toggling
   return (
     <Button
-      asChild // Use asChild to pass props to SidebarTrigger
+      asChild 
       variant="ghost"
       size="icon"
-      // onClick={toggleSidebar} // Remove: SidebarTrigger already calls toggleSidebar
       className="h-8 w-8 data-[state=open]:bg-accent data-[state=open]:text-accent-foreground"
     >
       <SidebarTrigger />
@@ -46,35 +44,32 @@ export default function AgentComputerLayout() {
       ...tool,
       instanceId: `${tool.id}-${Date.now()}`,
       windowState: 'default',
-      // Preserve content if switching back to document processor and content exists
       content: tool.id === 'document-processor' ? documentContent : undefined,
     };
     setActiveToolInstance(newInstance);
   }, [documentContent]);
 
-  useEffect(() => {
-    const defaultTool = ALL_TOOLS.find(t => t.id === 'document-processor');
-    if (defaultTool && !activeToolInstance) {
-      openTool(defaultTool);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); 
+  // Removed the useEffect that defaulted to document-processor to allow Orchestration Center to show first
+  // useEffect(() => {
+  //   const defaultTool = ALL_TOOLS.find(t => t.id === 'document-processor');
+  //   if (defaultTool && !activeToolInstance) {
+  //     openTool(defaultTool);
+  //   }
+  // // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, []); 
 
 
   const handleContentChange = useCallback((newContent: string) => {
-    // This function is primarily for the Document Processor or tools that manage a central piece of text content
     if (activeToolInstance?.id === 'document-processor') {
       setDocumentContent(newContent);
-      // Update content in activeToolInstance if it's the doc processor
       setActiveToolInstance(prev => 
         prev && prev.id === 'document-processor' ? {...prev, content: newContent} : prev
       );
     }
-    // For other tools, content changes are managed within the tool or this function could be extended
   }, [activeToolInstance]);
 
   const handleTutorial = () => {
-    alert("Welcome to Agent-Computer!\n\n- Use the Dock on the left to select tools.\n- Each tool has its own integrated AI Agent and Smart Suggestions.\n- Interact with the AI for assistance within the tool.\n\nThis is a brief overview. More detailed tutorials coming soon!");
+    alert("Welcome to Agent-Computer!\n\n- Use the Dock on the left to select tools.\n- The Main Page (Orchestration Center) helps you plan complex tasks.\n- Each tool has its own integrated AI Agent and Smart Suggestions.\n\nThis is a brief overview. More detailed tutorials coming soon!");
   };
   
   const [defaultSidebarOpen, setDefaultSidebarOpen] = React.useState(true);
@@ -85,6 +80,10 @@ export default function AgentComputerLayout() {
     mediaQuery.addEventListener('change', handleResize);
     return () => mediaQuery.removeEventListener('change', handleResize);
   }, []);
+
+  const navigateToOrchestrationCenter = () => {
+    setActiveToolInstance(null); // Setting active tool to null shows the Orchestration Center
+  };
 
 
   return (
@@ -97,10 +96,10 @@ export default function AgentComputerLayout() {
           className="border-r bg-sidebar text-sidebar-foreground shadow-md data-[collapsible=icon]:shadow-sm transition-all duration-300 ease-in-out z-20"
         >
           <SidebarHeader className="p-2 flex justify-between items-center h-14 border-b border-sidebar-border">
-             <div className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center w-full">
+             <button onClick={navigateToOrchestrationCenter} className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center w-full cursor-pointer hover:opacity-80 transition-opacity">
                 <Bot className="h-7 w-7 text-primary shrink-0" />
                 <h1 className="text-xl font-bold text-primary group-data-[collapsible=icon]:hidden truncate">Agent-Computer</h1>
-             </div>
+             </button>
           </SidebarHeader>
           <SidebarContent className="p-0">
             <Dock tools={ALL_TOOLS} onSelectTool={openTool} activeToolId={activeToolInstance?.id} />
@@ -120,7 +119,12 @@ export default function AgentComputerLayout() {
           <div className="absolute top-2 left-2 z-10 md:hidden">
              <CustomSidebarTrigger />
           </div>
-          <Space activeToolInstance={activeToolInstance} onContentChange={handleContentChange} />
+          <Space 
+            activeToolInstance={activeToolInstance} 
+            onContentChange={handleContentChange}
+            tools={ALL_TOOLS} 
+            onSelectTool={openTool}
+          />
         </SidebarInset>
 
       </div>
@@ -128,3 +132,5 @@ export default function AgentComputerLayout() {
     </SidebarProvider>
   );
 }
+
+    
