@@ -20,12 +20,13 @@ import { ThemeSwitcher } from '@/components/cognicanvas/theme-switcher';
 import { Button } from '@/components/ui/button';
 import { HelpCircle, Bot } from 'lucide-react';
 import { TutorialModal } from '@/components/cognicanvas/tutorial-modal';
+import { AddMcpServerModal } from '@/components/cognicanvas/add-mcp-server-modal'; // Added import
 
 // A small component to handle the sidebar trigger within the provider context
 const CustomSidebarTrigger = () => {
   return (
     <Button
-      asChild 
+      asChild
       variant="ghost"
       size="icon"
       className="h-8 w-8 data-[state=open]:bg-accent data-[state=open]:text-accent-foreground"
@@ -38,13 +39,14 @@ const CustomSidebarTrigger = () => {
 
 export default function AgentComputerLayout() {
   const [activeToolInstance, setActiveToolInstance] = useState<ActiveToolInstance | null>(null);
-  const [documentContent, setDocumentContent] = useState<string>(''); 
+  const [documentContent, setDocumentContent] = useState<string>('');
   const [isTutorialModalOpen, setIsTutorialModalOpen] = useState(false);
+  const [isAddMcpServerModalOpen, setIsAddMcpServerModalOpen] = useState(false); // Added state for MCP modal
 
   const openTool = useCallback((tool: Tool) => {
     const newInstance: ActiveToolInstance = {
       ...tool,
-      instanceId: `${tool.id}-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`, // Added more uniqueness
+      instanceId: `${tool.id}-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
       windowState: 'default',
       content: tool.id === 'document-processor' ? documentContent : undefined,
     };
@@ -54,7 +56,7 @@ export default function AgentComputerLayout() {
   const handleContentChange = useCallback((newContent: string) => {
     if (activeToolInstance?.id === 'document-processor') {
       setDocumentContent(newContent);
-      setActiveToolInstance(prev => 
+      setActiveToolInstance(prev =>
         prev && prev.id === 'document-processor' ? {...prev, content: newContent} : prev
       );
     }
@@ -63,35 +65,39 @@ export default function AgentComputerLayout() {
   const handleTutorial = () => {
     setIsTutorialModalOpen(true);
   };
-  
-  const [isSidebarOpen, setIsSidebarOpen] = React.useState(true); // For controlled sidebar
+
+  const handleOpenAddMcpServerModal = () => {
+    setIsAddMcpServerModalOpen(true);
+  };
+
+  const [isSidebarOpen, setIsSidebarOpen] = React.useState(true);
   const [hasMounted, setHasMounted] = React.useState(false);
 
   useEffect(() => {
-    setHasMounted(true); // Indicate client has mounted
+    setHasMounted(true);
     const mediaQuery = window.matchMedia('(max-width: 768px)');
     const handleResize = () => {
-      setIsSidebarOpen(!mediaQuery.matches); // Desktop open, mobile closed by default after mount
+      setIsSidebarOpen(!mediaQuery.matches);
     };
-    handleResize(); // Set initial state based on client's screen size after mount
+    handleResize();
     mediaQuery.addEventListener('change', handleResize);
     return () => mediaQuery.removeEventListener('change', handleResize);
   }, []);
 
   const navigateToOrchestrationCenter = () => {
-    setActiveToolInstance(null); 
+    setActiveToolInstance(null);
   };
 
 
   return (
     <SidebarProvider
-      open={hasMounted ? isSidebarOpen : true} // Controlled: use responsive state after mount, default to true for SSR
-      onOpenChange={setIsSidebarOpen} // Controlled
+      open={hasMounted ? isSidebarOpen : true}
+      onOpenChange={setIsSidebarOpen}
     >
       <div className="flex h-screen w-screen overflow-hidden bg-background">
         <Sidebar
           side="left"
-          variant="sidebar" 
+          variant="sidebar"
           collapsible="icon"
           className="border-r bg-sidebar text-sidebar-foreground shadow-md data-[collapsible=icon]:shadow-sm transition-all duration-300 ease-in-out z-20"
         >
@@ -102,7 +108,12 @@ export default function AgentComputerLayout() {
              </button>
           </SidebarHeader>
           <SidebarContent className="p-0">
-            <Dock tools={ALL_TOOLS} onSelectTool={openTool} activeToolId={activeToolInstance?.id} />
+            <Dock 
+              tools={ALL_TOOLS} 
+              onSelectTool={openTool} 
+              activeToolId={activeToolInstance?.id}
+              onAddMcpServerClick={handleOpenAddMcpServerModal} // Passed down handler
+            />
           </SidebarContent>
           <SidebarFooter className="p-2 border-t border-sidebar-border h-14">
               <div className="flex items-center justify-center group-data-[collapsible=icon]:flex-col gap-1.5">
@@ -119,16 +130,17 @@ export default function AgentComputerLayout() {
           <div className="absolute top-2 left-2 z-10 md:hidden">
              <CustomSidebarTrigger />
           </div>
-          <Space 
-            activeToolInstance={activeToolInstance} 
+          <Space
+            activeToolInstance={activeToolInstance}
             onContentChange={handleContentChange}
-            tools={ALL_TOOLS} 
+            tools={ALL_TOOLS}
             onSelectTool={openTool}
           />
         </SidebarInset>
       </div>
       <Toaster />
       <TutorialModal isOpen={isTutorialModalOpen} onOpenChange={setIsTutorialModalOpen} />
+      <AddMcpServerModal isOpen={isAddMcpServerModalOpen} onOpenChange={setIsAddMcpServerModalOpen} />
     </SidebarProvider>
   );
 }

@@ -14,19 +14,20 @@ interface DockProps {
   tools: Tool[];
   onSelectTool: (tool: Tool) => void;
   activeToolId?: string;
+  onAddMcpServerClick: () => void; // New prop for modal trigger
 }
 
-export const Dock: React.FC<DockProps> = ({ tools, onSelectTool, activeToolId }) => {
+export const Dock: React.FC<DockProps> = ({ tools, onSelectTool, activeToolId, onAddMcpServerClick }) => {
   const [searchTerm, setSearchTerm] = useState('');
 
-  const filteredTools = useMemo(() => 
-    tools.filter(tool => 
+  const filteredTools = useMemo(() =>
+    tools.filter(tool =>
       tool.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       tool.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
       tool.description.toLowerCase().includes(searchTerm.toLowerCase())
     ), [tools, searchTerm]);
 
-  const toolsByCategory: Record<string, Tool[]> = useMemo(() => 
+  const toolsByCategory: Record<string, Tool[]> = useMemo(() =>
     filteredTools.reduce((acc, tool) => {
       (acc[tool.category] = acc[tool.category] || []).push(tool);
       return acc;
@@ -36,18 +37,18 @@ export const Dock: React.FC<DockProps> = ({ tools, onSelectTool, activeToolId })
   return (
     <div className="h-full flex flex-col">
       <div className="p-2 group-data-[collapsible=icon]:hidden flex flex-col gap-2">
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           className="w-full h-9 text-sm justify-start"
-          onClick={() => alert('Add MCP Server dialog would appear here.')}
+          onClick={onAddMcpServerClick} // Use the new prop
         >
           <PlugZap className="mr-2 h-4 w-4" />
           Add MCP Server
         </Button>
         <div className="relative">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input 
-            placeholder="Search tools..." 
+          <Input
+            placeholder="Search tools..."
             className="pl-8 h-9 text-sm" // Matched height to button
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -68,7 +69,7 @@ export const Dock: React.FC<DockProps> = ({ tools, onSelectTool, activeToolId })
                     className="w-full justify-start group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:h-9 group-data-[collapsible=icon]:w-9"
                     tooltip={{ children: tool.name, className: "group-data-[collapsible=icon]:block hidden text-xs"}}
                     variant="ghost"
-                    size="default" 
+                    size="default"
                   >
                     <tool.icon className="h-4 w-4 shrink-0" />
                     <span className="group-data-[collapsible=icon]:hidden truncate ml-2 text-sm">{tool.name}</span>
