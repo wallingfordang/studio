@@ -1,5 +1,5 @@
 
-import { FileText, Globe, MessageSquare, ImageIcon, ListChecks, Table, Presentation, Code, Gamepad2, Settings, HelpCircle, Brain, Lightbulb } from 'lucide-react';
+import { FileText, Globe, MessageSquare, ImageIcon, ListChecks, Table, Presentation, Code, Gamepad2, Settings, HelpCircle, Brain, Lightbulb, Send } from 'lucide-react';
 import type { Tool } from './types';
 import { DocumentProcessor } from './tools/document-processor';
 import { WebNavigator } from './tools/web-navigator';
@@ -92,7 +92,7 @@ export const ALL_TOOLS: Tool[] = [
     name: 'Comms Hub',
     icon: MessageSquare,
     description: 'Integrated email, calendar, and messenger.',
-    component: (props) => <PlaceholderToolComponent {...props} />,
+    component: (props) => <PlaceholderToolComponent {...props} tool={ALL_TOOLS.find(t => t.id === 'comms-hub')!} />,
     category: 'Communication',
   },
   {
@@ -100,7 +100,7 @@ export const ALL_TOOLS: Tool[] = [
     name: 'Creative Suite',
     icon: ImageIcon,
     description: 'Tools for image generation and editing.',
-    component: (props) => <PlaceholderToolComponent {...props} />,
+    component: (props) => <PlaceholderToolComponent {...props} tool={ALL_TOOLS.find(t => t.id === 'creative-suite')!} />,
     category: 'Creative',
   },
   {
@@ -108,7 +108,7 @@ export const ALL_TOOLS: Tool[] = [
     name: 'Task Manager',
     icon: ListChecks,
     description: 'AI-assisted task planning and tracking.',
-    component: (props) => <PlaceholderToolComponent {...props} />,
+    component: (props) => <PlaceholderToolComponent {...props} tool={ALL_TOOLS.find(t => t.id === 'task-manager')!} />,
     category: 'Productivity',
   },
   {
@@ -116,7 +116,7 @@ export const ALL_TOOLS: Tool[] = [
     name: 'Spreadsheet Tool',
     icon: Table,
     description: 'Data organization, calculation, and visualization.',
-    component: (props) => <PlaceholderToolComponent {...props} />,
+    component: (props) => <PlaceholderToolComponent {...props} tool={ALL_TOOLS.find(t => t.id === 'spreadsheet-tool')!} />,
     category: 'Productivity',
   },
   {
@@ -124,7 +124,7 @@ export const ALL_TOOLS: Tool[] = [
     name: 'Presentation Builder',
     icon: Presentation,
     description: 'Create slideshows with AI assistance.',
-    component: (props) => <PlaceholderToolComponent {...props} />,
+    component: (props) => <PlaceholderToolComponent {...props} tool={ALL_TOOLS.find(t => t.id === 'presentation-builder')!} />,
     category: 'Productivity',
   },
   {
@@ -132,7 +132,7 @@ export const ALL_TOOLS: Tool[] = [
     name: 'Code Editor',
     icon: Code,
     description: 'View and make minor edits to code snippets.',
-    component: (props) => <PlaceholderToolComponent {...props} />,
+    component: (props) => <PlaceholderToolComponent {...props} tool={ALL_TOOLS.find(t => t.id === 'code-editor')!} />,
     category: 'Development',
   },
   {
@@ -140,7 +140,7 @@ export const ALL_TOOLS: Tool[] = [
     name: 'Game Center',
     icon: Gamepad2,
     description: 'Access to casual games.',
-    component: (props) => <PlaceholderToolComponent {...props} />,
+    component: (props) => <PlaceholderToolComponent {...props} tool={ALL_TOOLS.find(t => t.id === 'game-center')!} />,
     category: 'Entertainment',
   },
   {
@@ -148,8 +148,35 @@ export const ALL_TOOLS: Tool[] = [
     name: 'Settings',
     icon: Settings,
     description: 'Customize your CogniCanvas experience.',
-    component: (props) => <PlaceholderToolComponent {...props} />,
+    component: (props) => <PlaceholderToolComponent {...props} tool={ALL_TOOLS.find(t => t.id === 'settings')!} />,
     category: 'System',
   },
 ];
 
+// Update PlaceholderToolComponent to correctly pass the 'tool' prop
+const originalPlaceholderComponent = PlaceholderToolComponent;
+const PatchedPlaceholderToolComponent: React.FC<{ tool: Tool }> = ({ tool, ...props }) => {
+  // Ensure tool is always defined. If it's somehow undefined, we could render a generic error or default.
+  // For this patch, we assume it will be found or the calling code ensures it.
+  return originalPlaceholderComponent({ ...props, tool });
+};
+
+// Update ALL_TOOLS to use the patched component or ensure tool is passed correctly
+ALL_TOOLS.forEach(tool => {
+  if (tool.component.name === 'PlaceholderToolComponent' || tool.component.displayName === 'PlaceholderToolComponent') {
+    // This is a bit of a hacky way to check; ideally, the component would be passed the tool prop directly.
+    // The current structure is (props) => <PlaceholderToolComponent {...props} tool={THE_ACTUAL_TOOL_OBJECT_HERE} />
+    // We need to ensure the `tool` prop is correctly passed when PlaceholderToolComponent is invoked.
+    // The original component already expects a 'tool' prop. The way it was called was by spreading props,
+    // but not explicitly passing the `tool` object itself.
+
+    // Let's correct how PlaceholderToolComponent is assigned in ALL_TOOLS for non-implemented tools
+    // This was the problematic part. The component was being assigned as:
+    // component: (props) => <PlaceholderToolComponent {...props} />,
+    // which means `PlaceholderToolComponent` itself wouldn't receive its `tool` prop.
+    // It should be:
+    // component: (props) => <PlaceholderToolComponent {...props} tool={the_specific_tool_object} />,
+    // The previous diff already corrected this by finding the tool by id.
+    // The issue was simply the missing `Send` import.
+  }
+});
