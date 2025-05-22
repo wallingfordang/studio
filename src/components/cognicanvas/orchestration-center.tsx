@@ -43,7 +43,7 @@ export const OrchestrationCenter: React.FC<OrchestrationCenterProps> = ({ tools,
 
 
   useEffect(() => {
-    setClientReady(true);
+    setClientReady(true); // Moved setClientReady to its own useEffect to run once on mount
   }, []);
 
   useEffect(() => {
@@ -138,7 +138,7 @@ export const OrchestrationCenter: React.FC<OrchestrationCenterProps> = ({ tools,
         </CardHeader>
         <CardContent className="p-0 flex-grow flex flex-col overflow-hidden">
           <ScrollArea className="flex-grow" viewportRef={scrollViewportRef}>
-            <div className="p-4 space-y-4">
+            <div className="p-6 space-y-4"> {/* Increased padding from p-4 to p-6 */}
               {conversation.map((msg) => (
                 <div key={msg.id} className={`flex w-full ${msg.sender === 'user' ? 'justify-end' : 'justify-start'} ${msg.sender === 'log' ? 'my-1' : 'my-2'}`}>
                   {msg.sender === 'agent' && (
@@ -242,7 +242,7 @@ export const OrchestrationCenter: React.FC<OrchestrationCenterProps> = ({ tools,
               <Button variant="outline" className="flex-col h-auto p-3.5 justify-start items-start text-left hover:bg-accent/50" onClick={() => alert('Add MCP Server dialog would appear here.')}>
                   <PlugZap className="h-5 w-5 mb-2 text-primary" />
                   <span className="text-sm font-medium">Add MCP Server</span>
-                   <span className="text-xs text-muted-foreground truncate w-full mt-0.5">Connect a new server</span>
+                   <span className="text-xs text-muted-foreground truncate w-full mt-0.5">Connect a new server instance</span>
               </Button>
             </div>
         </CardContent>
