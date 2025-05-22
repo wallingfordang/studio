@@ -1,18 +1,18 @@
 
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import type { Tool } from './types';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Bot, Send, PlayCircle, ExternalLink, PlugZap } from 'lucide-react'; // Added PlugZap
+import { Bot, Send, PlayCircle, ExternalLink, PlugZap } from 'lucide-react';
 
 interface OrchestrationCenterProps {
   tools: Tool[];
   onSelectTool: (tool: Tool) => void;
-  userName?: string; // Optional user name for personalization
+  userName?: string;
 }
 
 interface OrchestrationMessage {
@@ -22,23 +22,45 @@ interface OrchestrationMessage {
   timestamp: Date;
 }
 
+const generateUniqueId = () => {
+  return `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+};
+
 export const OrchestrationCenter: React.FC<OrchestrationCenterProps> = ({ tools, onSelectTool, userName = "User" }) => {
   const [userInput, setUserInput] = useState('');
   const [conversation, setConversation] = useState<OrchestrationMessage[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [clientReady, setClientReady] = useState(false); // New state to track client mount
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Set initial welcome message on client-side after hydration
-    setConversation([
-      { id: `${Date.now()}-${Math.random().toString(36).substring(2, 9)}-initial-agent`, sender: 'agent', text: `Hello ${userName}, how can I help you orchestrate your day?`, timestamp: new Date() }
-    ]);
-  }, [userName]);
+    setClientReady(true); // Set to true after initial client render
+  }, []);
+
+  useEffect(() => {
+    // Only set initial welcome message on client-side after hydration and clientReady is true
+    if (clientReady) {
+      setConversation([
+        { id: generateUniqueId() + '-initial-agent', sender: 'agent', text: `Hello ${userName}, how can I help you orchestrate your day?`, timestamp: new Date() }
+      ]);
+    }
+  }, [userName, clientReady]); // Depend on clientReady
+
+  const scrollToBottom = useCallback(() => {
+    if (scrollAreaRef.current) {
+      scrollAreaRef.current.scrollTo({ top: scrollAreaRef.current.scrollHeight, behavior: 'smooth' });
+    }
+  }, []);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [conversation, scrollToBottom]);
 
   const handleSendMessage = async () => {
     if (!userInput.trim()) return;
 
     const newUserMessage: OrchestrationMessage = {
-      id: `${Date.now()}-${Math.random().toString(36).substring(2, 9)}-user`,
+      id: generateUniqueId() + '-user',
       sender: 'user',
       text: userInput,
       timestamp: new Date(),
@@ -47,7 +69,6 @@ export const OrchestrationCenter: React.FC<OrchestrationCenterProps> = ({ tools,
     setUserInput('');
     setIsProcessing(true);
 
-    // Simulate agent processing and response
     setTimeout(() => {
       let agentResponseText = "I'm processing your request. Let's break this down...";
       if (userInput.toLowerCase().includes("tokyo trip")) {
@@ -59,7 +80,7 @@ export const OrchestrationCenter: React.FC<OrchestrationCenterProps> = ({ tools,
       }
 
       const newAgentMessage: OrchestrationMessage = {
-        id: `${Date.now()}-${Math.random().toString(36).substring(2, 9)}-agent`,
+        id: generateUniqueId() + '-agent',
         sender: 'agent',
         text: agentResponseText,
         timestamp: new Date(),
@@ -73,7 +94,6 @@ export const OrchestrationCenter: React.FC<OrchestrationCenterProps> = ({ tools,
 
   return (
     <div className="flex flex-col h-full p-4 md:p-6 lg:p-8 bg-background text-foreground overflow-y-auto space-y-6 lg:space-y-8">
-      {/* Central Focus: Orchestration Agent Interaction */}
       <Card className="shadow-xl border-border flex flex-col flex-grow lg:flex-grow-0 lg:min-h-[400px]">
         <CardHeader className="border-b">
           <CardTitle className="text-xl flex items-center">
@@ -82,7 +102,7 @@ export const OrchestrationCenter: React.FC<OrchestrationCenterProps> = ({ tools,
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0 flex-grow flex flex-col">
-          <ScrollArea className="flex-grow p-4 space-y-4 min-h-[200px] max-h-[calc(100vh-450px)] sm:max-h-[calc(100vh-400px)] lg:max-h-[calc(100%-100px)]"> {/* Adjusted max-h */}
+          <ScrollArea className="flex-grow p-4 space-y-4 min-h-[200px] max-h-[calc(100vh-450px)] sm:max-h-[calc(100vh-400px)] lg:max-h-[calc(100%-100px)]" ref={scrollAreaRef}>
             {conversation.map((msg) => (
               <div key={msg.id} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
                 <div className={`p-3 rounded-lg max-w-[80%] text-sm ${msg.sender === 'user' ? 'bg-primary text-primary-foreground' : 'bg-card border'}`}>
@@ -123,7 +143,6 @@ export const OrchestrationCenter: React.FC<OrchestrationCenterProps> = ({ tools,
         </CardContent>
       </Card>
 
-      {/* Quick Access */}
       <Card className="shadow-xl border-border">
         <CardHeader className="border-b">
           <CardTitle className="text-xl flex items-center">
