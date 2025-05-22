@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import type { Tool } from './types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,16 +25,21 @@ interface OrchestrationMessage {
 
 export const OrchestrationCenter: React.FC<OrchestrationCenterProps> = ({ tools, onSelectTool, userName = "User" }) => {
   const [userInput, setUserInput] = useState('');
-  const [conversation, setConversation] = useState<OrchestrationMessage[]>([
-    { id: '1', sender: 'agent', text: `Hello ${userName}, how can I help you orchestrate your day?`, timestamp: new Date() }
-  ]);
+  const [conversation, setConversation] = useState<OrchestrationMessage[]>([]); // Initialize as empty
   const [isProcessing, setIsProcessing] = useState(false);
+
+  useEffect(() => {
+    // Set initial welcome message on client-side after hydration
+    setConversation([
+      { id: 'initial-agent-message', sender: 'agent', text: `Hello ${userName}, how can I help you orchestrate your day?`, timestamp: new Date() }
+    ]);
+  }, [userName]); // Depend on userName if it can change, otherwise an empty array [] is fine for one-time effect.
 
   const handleSendMessage = async () => {
     if (!userInput.trim()) return;
 
     const newUserMessage: OrchestrationMessage = {
-      id: Date.now().toString() + '-user',
+      id: `${Date.now()}-${Math.random().toString(36).substring(2, 9)}-user`,
       sender: 'user',
       text: userInput,
       timestamp: new Date(),
@@ -55,7 +60,7 @@ export const OrchestrationCenter: React.FC<OrchestrationCenterProps> = ({ tools,
       }
 
       const newAgentMessage: OrchestrationMessage = {
-        id: Date.now().toString() + '-agent',
+        id: `${Date.now()}-${Math.random().toString(36).substring(2, 9)}-agent`,
         sender: 'agent',
         text: agentResponseText,
         timestamp: new Date(),
