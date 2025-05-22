@@ -1,8 +1,8 @@
+
 "use client";
 
 import type React from 'react';
 import type { ActiveToolInstance } from './types';
-import Image from 'next/image';
 import { Compass } from 'lucide-react';
 
 interface SpaceProps {
@@ -19,17 +19,6 @@ export const Space: React.FC<SpaceProps> = ({ activeToolInstance, onContentChang
         <p className="text-center max-w-lg text-base">
           Your intelligent workspace awaits. Select a tool from the dock on the left to begin your AI-assisted journey.
         </p>
-        <div className="mt-8">
-          <Image 
-            src="https://placehold.co/400x250.png" 
-            alt="Agent-Computer Abstract Workspace" 
-            width={400} 
-            height={250} 
-            className="rounded-xl shadow-2xl" 
-            priority
-            data-ai-hint="abstract workspace"
-          />
-        </div>
       </div>
     );
   }

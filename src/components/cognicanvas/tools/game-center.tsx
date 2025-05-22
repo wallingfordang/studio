@@ -8,15 +8,12 @@ import { AgentStream } from '@/components/cognicanvas/agent-stream';
 import { SmartSuggestions } from '@/components/cognicanvas/smart-suggestions';
 import { Gamepad2, Puzzle, Spade, ArrowLeft, LayoutGrid } from 'lucide-react';
 import React, { useState } from 'react';
-import Image from 'next/image';
 
 interface Game {
   id: 'chess' | 'poker';
   name: string;
   description: string;
   icon: React.ElementType;
-  imagePath?: string; // Optional: path to a representative image
-  dataAiHint?: string;
 }
 
 const games: Game[] = [
@@ -25,16 +22,12 @@ const games: Game[] = [
     name: 'Chess vs. AI',
     description: 'Challenge an AI opponent in a classic game of strategy. Sharpen your mind and master the board.',
     icon: Puzzle,
-    imagePath: 'https://placehold.co/600x400.png',
-    dataAiHint: 'chess board'
   },
   {
     id: 'poker',
     name: 'Poker vs. AI',
     description: 'Test your skills against AI players. Can you bluff your way to victory in this card game classic?',
     icon: Spade,
-    imagePath: 'https://placehold.co/600x400.png',
-    dataAiHint: 'poker cards'
   },
 ];
 
@@ -60,24 +53,14 @@ export const GameCenter: React.FC<ToolProps> = ({ tool, content, onContentChange
         {games.map((game) => (
           <Card 
             key={game.id} 
-            className="hover:shadow-lg transition-shadow cursor-pointer bg-card hover:bg-accent/10"
+            className="hover:shadow-lg transition-shadow cursor-pointer bg-card hover:bg-accent/10 flex flex-col"
             onClick={() => handleGameSelect(game)}
           >
             <CardHeader className="items-center p-4">
-              {game.imagePath && (
-                <Image
-                  src={game.imagePath}
-                  alt={`${game.name} illustration`}
-                  width={150}
-                  height={100}
-                  className="rounded-md mb-3 object-cover"
-                  data-ai-hint={game.dataAiHint || 'game concept'}
-                />
-              )}
               <game.icon className="w-10 h-10 text-primary mb-2" />
               <CardTitle className="text-lg text-center">{game.name}</CardTitle>
             </CardHeader>
-            <CardContent className="p-4 pt-0">
+            <CardContent className="p-4 pt-0 flex-grow">
               <p className="text-sm text-muted-foreground text-center">{game.description}</p>
             </CardContent>
             <CardFooter className="p-4 justify-center">
@@ -137,7 +120,6 @@ export const GameCenter: React.FC<ToolProps> = ({ tool, content, onContentChange
             activeTool={tool}
             currentContent={selectedGame ? `Playing ${selectedGame.name}` : "Game Center"}
             onContentUpdate={(newContent) => {
-              // For GameCenter, onContentChange might be used for game state or preferences in future
               if (onContentChange) onContentChange(newContent);
             }}
           />
