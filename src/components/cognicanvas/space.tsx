@@ -15,14 +15,14 @@ export const Space: React.FC<SpaceProps> = ({ activeToolInstance, onContentChang
     return (
       <div className="flex-grow flex flex-col items-center justify-center bg-background text-muted-foreground p-8 h-full">
         <Compass className="w-24 h-24 text-primary/30 mb-6" strokeWidth={1}/>
-        <h2 className="text-3xl font-semibold mb-3 text-foreground tracking-tight">Welcome to CogniCanvas</h2>
+        <h2 className="text-3xl font-semibold mb-3 text-foreground tracking-tight">Welcome to Agent-Computer</h2>
         <p className="text-center max-w-lg text-base">
           Your intelligent workspace awaits. Select a tool from the dock on the left to begin your AI-assisted journey.
         </p>
         <div className="mt-8">
           <Image 
             src="https://placehold.co/400x250.png" 
-            alt="CogniCanvas Abstract Workspace" 
+            alt="Agent-Computer Abstract Workspace" 
             width={400} 
             height={250} 
             className="rounded-xl shadow-2xl" 

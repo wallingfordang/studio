@@ -1,130 +1,134 @@
-
 "use client";
-import React, { useState, useCallback, useEffect } from 'react';
-import {
-  SidebarProvider,
-  Sidebar,
-  SidebarContent,
-  SidebarInset,
-  SidebarHeader,
-  SidebarFooter,
-  SidebarTrigger,
-  useSidebar,
-} from '@/components/ui/sidebar';
-import { Toaster } from '@/components/ui/toaster';
-import { Dock } from '@/components/cognicanvas/dock';
-import { Space } from '@/components/cognicanvas/space';
-import type { ActiveToolInstance, Tool } from '@/components/cognicanvas/types';
-import { ALL_TOOLS } from '@/components/cognicanvas/constants.tsx';
-import { ThemeSwitcher } from '@/components/cognicanvas/theme-switcher';
-import { Button } from '@/components/ui/button';
-import { HelpCircle, Bot } from 'lucide-react';
 
-// A small component to handle the sidebar trigger within the provider context
-const CustomSidebarTrigger = () => {
-  // const { toggleSidebar } = useSidebar(); // SidebarTrigger handles its own toggling
+import type { ToolProps } from '@/components/cognicanvas/types';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { summarizeWebpage } from '@/ai/flows/web-navigator-summarization';
+import React, { useState } from 'react';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Globe, Search, ExternalLink, Loader2, AlertCircle } from 'lucide-react';
+import { AgentStream } from '@/components/cognicanvas/agent-stream';
+import { SmartSuggestions } from '@/components/cognicanvas/smart-suggestions';
+
+export const WebNavigator: React.FC<ToolProps> = ({ tool, onContentChange }) => {
+  const [url, setUrl] = useState('');
+  const [summary, setSummary] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [currentDisplayUrl, setCurrentDisplayUrl] = useState<string | null>(null);
+
+  const handleSummarize = async () => {
+    if (!url) {
+      setError('Please enter a URL.');
+      return;
+    }
+    setIsLoading(true);
+    setError(null);
+    setSummary('');
+    setCurrentDisplayUrl(null);
+    try {
+      new URL(url); 
+      const result = await summarizeWebpage({ url });
+      setSummary(result.summary);
+      setCurrentDisplayUrl(url);
+      // Note: WebNavigator doesn't use the global onContentChange for its primary content (summary)
+      // but AgentStream might, so we pass a handler.
+    } catch (e: any) {
+      console.error("Error summarizing webpage:", e);
+      if (e instanceof TypeError && e.message.includes("Invalid URL")) {
+        setError("Invalid URL. Please ensure it starts with http:// or https://");
+      } else {
+        setError(e.message || 'Failed to summarize webpage. The AI model might be unavailable or the URL inaccessible.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
-    <Button
-      asChild // Use asChild to pass props to SidebarTrigger
-      variant="ghost"
-      size="icon"
-      // onClick={toggleSidebar} // Remove: SidebarTrigger already calls toggleSidebar
-      className="h-8 w-8 data-[state=open]:bg-accent data-[state=open]:text-accent-foreground"
-    >
-      <SidebarTrigger />
-    </Button>
+    <Card className="h-full flex flex-col shadow-xl rounded-lg overflow-hidden border-border bg-card">
+      <CardHeader className="bg-card border-b p-4">
+        <CardTitle className="text-lg font-semibold flex items-center text-card-foreground">
+          <tool.icon className="mr-2 h-5 w-5 text-primary" />
+          {tool.name}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="p-0 flex-grow flex flex-row overflow-hidden">
+        {/* Main WebNavigator content area */}
+        <div className="flex-grow flex flex-col gap-4 p-4">
+          <div className="flex gap-2 items-center">
+            <div className="relative flex-grow">
+              <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="url"
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                placeholder="Enter URL (e.g., https://example.com)"
+                className="pl-10 bg-card focus:bg-background" // Ensure input field is visible
+                disabled={isLoading}
+                aria-label="URL input"
+              />
+            </div>
+            <Button onClick={handleSummarize} disabled={isLoading} className="shrink-0">
+              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Search className="mr-2 h-4 w-4" />}
+              {isLoading ? 'Summarizing...' : 'Summarize'}
+            </Button>
+          </div>
+          {error && (
+            <Alert variant="destructive" className="bg-destructive/10 border-destructive/50 text-destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+          {summary && currentDisplayUrl && (
+            <>
+              <div className="flex justify-between items-center">
+                <h3 className="font-semibold text-base text-foreground">Summary:</h3>
+                <Button variant="ghost" size="sm" asChild>
+                  <a href={currentDisplayUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                    Open Original <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
+                  </a>
+                </Button>
+              </div>
+              <ScrollArea className="flex-grow min-h-[200px] border rounded-md p-3 bg-background shadow-inner">
+                <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">{summary}</p>
+              </ScrollArea>
+            </>
+          )}
+          {!summary && !isLoading && !error && (
+            <div className="flex-grow flex flex-col items-center justify-center text-center text-muted-foreground p-4 border border-dashed rounded-md">
+              <Globe className="h-12 w-12 mb-3 text-primary/50" />
+              <p>Enter a URL above and click "Summarize" to get an AI-powered summary of the webpage content.</p>
+            </div>
+          )}
+          {isLoading && !summary && ( // Show loader only if summary isn't loaded yet
+            <div className="flex-grow flex items-center justify-center text-muted-foreground">
+              <Loader2 className="mr-2 h-6 w-6 animate-spin" />
+              <p>Loading summary, please wait...</p>
+            </div>
+          )}
+        </div>
+        {/* Agent Stream + Smart Suggestions part */}
+        <div className="w-[340px] md:w-[380px] lg:w-[420px] border-l border-border flex flex-col bg-sidebar text-sidebar-foreground shrink-0">
+          <AgentStream
+            activeTool={tool}
+            currentContent={summary || url} // Provide summary or URL as context
+            onContentUpdate={(newContent) => {
+              // The agent in WebNavigator typically doesn't update primary content this way.
+              // If it were to, for example, refine a summary, then setSummary(newContent) would go here.
+              // For now, this can be a no-op or log.
+              if (onContentChange) onContentChange(newContent); // For generic cases if layout expects it
+            }}
+          />
+          <SmartSuggestions activeToolName={tool.name} />
+        </div>
+      </CardContent>
+       <CardFooter className="border-t p-3 text-xs text-muted-foreground bg-card">
+        AI-powered summarization by Agent-Computer. Results may vary.
+      </CardFooter>
+    </Card>
   );
 };
-
-
-export default function CogniCanvasLayout() {
-  const [activeToolInstance, setActiveToolInstance] = useState<ActiveToolInstance | null>(null);
-  const [documentContent, setDocumentContent] = useState<string>(''); 
-
-  const openTool = useCallback((tool: Tool) => {
-    const newInstance: ActiveToolInstance = {
-      ...tool,
-      instanceId: `${tool.id}-${Date.now()}`,
-      windowState: 'default',
-      // Preserve content if switching back to document processor and content exists
-      content: tool.id === 'document-processor' ? documentContent : undefined,
-    };
-    setActiveToolInstance(newInstance);
-  }, [documentContent]);
-
-  useEffect(() => {
-    const defaultTool = ALL_TOOLS.find(t => t.id === 'document-processor');
-    if (defaultTool && !activeToolInstance) {
-      openTool(defaultTool);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); 
-
-
-  const handleContentChange = useCallback((newContent: string) => {
-    // This function is primarily for the Document Processor or tools that manage a central piece of text content
-    if (activeToolInstance?.id === 'document-processor') {
-      setDocumentContent(newContent);
-      // Update content in activeToolInstance if it's the doc processor
-      setActiveToolInstance(prev => 
-        prev && prev.id === 'document-processor' ? {...prev, content: newContent} : prev
-      );
-    }
-    // For other tools, content changes are managed within the tool or this function could be extended
-  }, [activeToolInstance]);
-
-  const handleTutorial = () => {
-    alert("Welcome to CogniCanvas!\n\n- Use the Dock on the left to select tools.\n- Each tool has its own integrated AI Agent and Smart Suggestions.\n- Interact with the AI for assistance within the tool.\n\nThis is a brief overview. More detailed tutorials coming soon!");
-  };
-  
-  const [defaultSidebarOpen, setDefaultSidebarOpen] = React.useState(true);
-  useEffect(() => {
-    const mediaQuery = window.matchMedia('(max-width: 768px)');
-    const handleResize = () => setDefaultSidebarOpen(!mediaQuery.matches);
-    handleResize(); 
-    mediaQuery.addEventListener('change', handleResize);
-    return () => mediaQuery.removeEventListener('change', handleResize);
-  }, []);
-
-
-  return (
-    <SidebarProvider defaultOpen={defaultSidebarOpen}>
-      <div className="flex h-screen w-screen overflow-hidden bg-background">
-        <Sidebar
-          side="left"
-          variant="sidebar" 
-          collapsible="icon"
-          className="border-r bg-sidebar text-sidebar-foreground shadow-md data-[collapsible=icon]:shadow-sm transition-all duration-300 ease-in-out z-20"
-        >
-          <SidebarHeader className="p-2 flex justify-between items-center h-14 border-b border-sidebar-border">
-             <div className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center w-full">
-                <Bot className="h-7 w-7 text-primary shrink-0" />
-                <h1 className="text-xl font-bold text-primary group-data-[collapsible=icon]:hidden truncate">CogniCanvas</h1>
-             </div>
-          </SidebarHeader>
-          <SidebarContent className="p-0">
-            <Dock tools={ALL_TOOLS} onSelectTool={openTool} activeToolId={activeToolInstance?.id} />
-          </SidebarContent>
-          <SidebarFooter className="p-2 border-t border-sidebar-border h-14">
-              <div className="flex items-center justify-center group-data-[collapsible=icon]:flex-col gap-1.5">
-                  <ThemeSwitcher />
-                  <Button variant="ghost" size="icon" onClick={handleTutorial} className="w-8 h-8" title="Tutorial">
-                      <HelpCircle className="h-4 w-4" />
-                      <span className="sr-only">Tutorial</span>
-                  </Button>
-              </div>
-          </SidebarFooter>
-        </Sidebar>
-
-        <SidebarInset className="flex flex-col flex-1 overflow-hidden relative">
-          <div className="absolute top-2 left-2 z-10 md:hidden">
-             <CustomSidebarTrigger />
-          </div>
-          <Space activeToolInstance={activeToolInstance} onContentChange={handleContentChange} />
-        </SidebarInset>
-
-      </div>
-      <Toaster />
-    </SidebarProvider>
-  );
-}

@@ -9,7 +9,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'CogniCanvas',
+  title: 'Agent-Computer',
   description: 'A revolutionary, full-screen online operating environment with AI agents.',
 };
 

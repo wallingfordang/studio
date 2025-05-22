@@ -18,7 +18,7 @@ export function ThemeSwitcher() {
   // Initialize theme state based on localStorage or system preference
   const [theme, setThemeState] = useState(() => {
     if (typeof window === 'undefined') return 'light'; // Default for SSR
-    const storedTheme = localStorage.getItem('cognicanvas-theme');
+    const storedTheme = localStorage.getItem('agent-computer-theme');
     if (storedTheme && (storedTheme === 'light' || storedTheme === 'dark')) {
       return storedTheme;
     }
@@ -35,7 +35,7 @@ export function ThemeSwitcher() {
     setThemeState(newTheme);
     applyTheme(newTheme);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('cognicanvas-theme', newTheme);
+      localStorage.setItem('agent-computer-theme', newTheme);
     }
   }
 

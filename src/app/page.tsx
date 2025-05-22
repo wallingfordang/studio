@@ -1,5 +1,5 @@
-import CogniCanvasLayout from './cognicanvas-layout';
+import AgentComputerLayout from './agent-computer-layout';
 
 export default function Home() {
-  return <CogniCanvasLayout />;
+  return <AgentComputerLayout />;
 }

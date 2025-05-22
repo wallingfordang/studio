@@ -128,7 +128,7 @@ export const WebNavigator: React.FC<ToolProps> = ({ tool, onContentChange }) => 
         </div>
       </CardContent>
        <CardFooter className="border-t p-3 text-xs text-muted-foreground bg-card">
-        AI-powered summarization by CogniCanvas. Results may vary.
+        AI-powered summarization by Agent-Computer. Results may vary.
       </CardFooter>
     </Card>
   );
