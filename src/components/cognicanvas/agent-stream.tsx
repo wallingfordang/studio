@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
@@ -6,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Send, Brain, User, Activity, AlertTriangle, CheckCircle, RotateCcw, Sparkles, Loader2 } from 'lucide-react';
+import { Send, Brain, User, Sparkles, Loader2, CheckCircle, RotateCcw } from 'lucide-react';
 import { aiAssistedDrafting, type AiAssistedDraftingInput } from '@/ai/flows/ai-assisted-drafting';
 import { cn } from '@/lib/utils';
 
@@ -38,7 +39,9 @@ export const AgentStream: React.FC<AgentStreamProps> = ({ activeTool, currentCon
       { id: Date.now().toString(), type: 'agent', content: `Agent ready for ${activeTool.name}. How can I assist?`, timestamp: new Date() }
     ]);
     setInput('');
-  }, [activeTool]);
+    // Reset previous content ref when tool changes to avoid unintended undos
+    prevContentRef.current = activeTool.id === 'document-processor' ? currentContent : undefined;
+  }, [activeTool, currentContent]); // Added currentContent to dependencies for document-processor
 
   const addMessage = useCallback((type: AgentMessage['type'], content: string, previewData?: any) => {
     setMessages(prev => [...prev, { id: Date.now().toString(), type, content, timestamp: new Date(), previewData }]);
@@ -51,7 +54,10 @@ export const AgentStream: React.FC<AgentStreamProps> = ({ activeTool, currentCon
     addMessage('user', userInput);
     setInput('');
     setIsLoading(true);
-    prevContentRef.current = currentContent; // Store content before AI modification
+    
+    if (activeTool.id === 'document-processor') {
+        prevContentRef.current = currentContent; // Store content before AI modification for doc processor
+    }
 
     try {
       addMessage('log', `Processing request for ${activeTool.name}...`);
@@ -66,7 +72,12 @@ export const AgentStream: React.FC<AgentStreamProps> = ({ activeTool, currentCon
         addMessage('agent', result.draft);
         onContentUpdate(result.draft); 
       } else if (activeTool.id === 'web-navigator') {
-        addMessage('agent', `Web Navigator functions (like summarizing from a URL) are primarily handled within the tool window. How else can I help with navigation or general queries?`);
+        // For Web Navigator, the agent might provide guidance or answer general questions.
+        // Actual web summarization is handled by the tool's UI.
+        // We can enhance this with a specific flow for web navigator agent if needed.
+        addMessage('log', `Simulating AI response for ${activeTool.name}...`);
+        await new Promise(resolve => setTimeout(resolve, 800));
+        addMessage('agent', `For ${activeTool.name}: If you're asking about summarizing a URL, please use the input field in the tool. Otherwise, how can I help you with web navigation tasks or general queries? Your request was: "${userInput}"`);
       } else {
         addMessage('log', `Simulating AI response for ${activeTool.name}...`);
         await new Promise(resolve => setTimeout(resolve, 1200));
@@ -85,15 +96,17 @@ export const AgentStream: React.FC<AgentStreamProps> = ({ activeTool, currentCon
   const handleUndo = useCallback(() => {
     if (activeTool.id === 'document-processor' && prevContentRef.current !== undefined) {
       onContentUpdate(prevContentRef.current);
-      addMessage('log', `Reverted to previous content.`);
+      addMessage('log', `Reverted to previous content for ${activeTool.name}.`);
+      // Optionally clear prevContentRef after undo to prevent multiple undos of the same state
+      // prevContentRef.current = undefined; 
     } else {
       addMessage('log', 'Undo action is primarily for Document Processor content or not applicable here.');
     }
-  }, [activeTool.id, onContentUpdate, addMessage]);
+  }, [activeTool.id, activeTool.name, onContentUpdate, addMessage]);
 
 
   return (
-    <div className="flex flex-col h-full bg-background text-foreground group-data-[collapsible=icon]:hidden">
+    <div className="flex flex-col h-full bg-inherit text-foreground"> {/* Changed bg-background to bg-inherit */}
       <ScrollArea className="flex-grow p-3 space-y-3" ref={scrollAreaRef}>
         {messages.map((msg) => (
           <div key={msg.id} className={cn('flex mb-2', msg.type === 'user' ? 'justify-end' : 'justify-start')}>
@@ -147,16 +160,16 @@ export const AgentStream: React.FC<AgentStreamProps> = ({ activeTool, currentCon
         )}
       </ScrollArea>
       
-      <div className="border-t border-border p-3 space-y-2.5 bg-background">
-        {activeTool.id === 'document-processor' && !isLoading && (
+      <div className="border-t border-border p-3 space-y-2.5 bg-inherit"> {/* Changed bg-background to bg-inherit */}
+        {activeTool.id === 'document-processor' && messages.some(m => m.type === 'agent') && !isLoading && (
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={() => addMessage('log', 'Approve clicked (simulation).')} className="flex-1 text-xs">
+            <Button variant="outline" size="sm" onClick={() => addMessage('log', `Approve action clicked for ${activeTool.name}. (Simulation)`)} className="flex-1 text-xs">
               <CheckCircle className="mr-1.5 h-3.5 w-3.5" /> Approve
             </Button>
-            <Button variant="outline" size="sm" onClick={handleUndo} className="flex-1 text-xs">
+            <Button variant="outline" size="sm" onClick={handleUndo} className="flex-1 text-xs" disabled={prevContentRef.current === undefined}>
               <RotateCcw className="mr-1.5 h-3.5 w-3.5" /> Undo
             </Button>
-             <Button variant="outline" size="sm" onClick={() => addMessage('log', 'Modify clicked (simulation).')} className="flex-1 text-xs">
+             <Button variant="outline" size="sm" onClick={() => addMessage('log', `Modify action clicked for ${activeTool.name}. (Simulation)`)} className="flex-1 text-xs">
               <Sparkles className="mr-1.5 h-3.5 w-3.5" /> Modify
             </Button>
           </div>

@@ -1,3 +1,4 @@
+
 "use client";
 import React, { useState, useCallback, useEffect } from 'react';
 import {
@@ -12,21 +13,19 @@ import {
 } from '@/components/ui/sidebar';
 import { Toaster } from '@/components/ui/toaster';
 import { Dock } from '@/components/cognicanvas/dock';
-import { AgentStream } from '@/components/cognicanvas/agent-stream';
 import { Space } from '@/components/cognicanvas/space';
 import type { ActiveToolInstance, Tool } from '@/components/cognicanvas/types';
 import { ALL_TOOLS } from '@/components/cognicanvas/constants';
 import { ThemeSwitcher } from '@/components/cognicanvas/theme-switcher';
-import { SmartSuggestions } from '@/components/cognicanvas/smart-suggestions';
 import { Button } from '@/components/ui/button';
-import { HelpCircle, Bot } from 'lucide-react'; // Added Bot icon for branding
+import { HelpCircle, Bot } from 'lucide-react';
 
 // A small component to handle the sidebar trigger within the provider context
 const CustomSidebarTrigger = () => {
   const { toggleSidebar } = useSidebar();
   return (
     <Button variant="ghost" size="icon" onClick={toggleSidebar} className="h-8 w-8 data-[state=open]:bg-accent data-[state=open]:text-accent-foreground">
-      <SidebarTrigger /> {/* This uses PanelLeft internally */}
+      <SidebarTrigger />
     </Button>
   );
 };
@@ -41,6 +40,7 @@ export default function CogniCanvasLayout() {
       ...tool,
       instanceId: `${tool.id}-${Date.now()}`,
       windowState: 'default',
+      // Preserve content if switching back to document processor and content exists
       content: tool.id === 'document-processor' ? documentContent : undefined,
     };
     setActiveToolInstance(newInstance);
@@ -48,7 +48,7 @@ export default function CogniCanvasLayout() {
 
   useEffect(() => {
     const defaultTool = ALL_TOOLS.find(t => t.id === 'document-processor');
-    if (defaultTool && !activeToolInstance) { // Ensure it only runs if no tool is active
+    if (defaultTool && !activeToolInstance) {
       openTool(defaultTool);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -56,6 +56,7 @@ export default function CogniCanvasLayout() {
 
 
   const handleContentChange = useCallback((newContent: string) => {
+    // This function is primarily for the Document Processor or tools that manage a central piece of text content
     if (activeToolInstance?.id === 'document-processor') {
       setDocumentContent(newContent);
       // Update content in activeToolInstance if it's the doc processor
@@ -63,29 +64,29 @@ export default function CogniCanvasLayout() {
         prev && prev.id === 'document-processor' ? {...prev, content: newContent} : prev
       );
     }
+    // For other tools, content changes are managed within the tool or this function could be extended
   }, [activeToolInstance]);
 
   const handleTutorial = () => {
-    alert("Welcome to CogniCanvas!\n\n- Use the Dock on the left to select tools.\n- Interact with the AI Agent on the right.\n- Smart Suggestions will appear below the Agent.\n\nThis is a brief overview. More detailed tutorials coming soon!");
+    alert("Welcome to CogniCanvas!\n\n- Use the Dock on the left to select tools.\n- Each tool has its own integrated AI Agent and Smart Suggestions.\n- Interact with the AI for assistance within the tool.\n\nThis is a brief overview. More detailed tutorials coming soon!");
   };
   
-  // Define defaultOpen state for SidebarProvider based on screen size for better UX
   const [defaultSidebarOpen, setDefaultSidebarOpen] = React.useState(true);
   useEffect(() => {
     const mediaQuery = window.matchMedia('(max-width: 768px)');
     const handleResize = () => setDefaultSidebarOpen(!mediaQuery.matches);
-    handleResize(); // Initial check
+    handleResize(); 
     mediaQuery.addEventListener('change', handleResize);
     return () => mediaQuery.removeEventListener('change', handleResize);
   }, []);
 
 
   return (
-    <SidebarProvider defaultOpen={defaultSidebarOpen}> {/* Dock sidebar potentially collapsed on mobile */}
+    <SidebarProvider defaultOpen={defaultSidebarOpen}>
       <div className="flex h-screen w-screen overflow-hidden bg-background">
         <Sidebar
           side="left"
-          variant="sidebar" // Standard sidebar style
+          variant="sidebar" 
           collapsible="icon"
           className="border-r bg-sidebar text-sidebar-foreground shadow-md data-[collapsible=icon]:shadow-sm transition-all duration-300 ease-in-out z-20"
         >
@@ -109,44 +110,15 @@ export default function CogniCanvasLayout() {
           </SidebarFooter>
         </Sidebar>
 
-        <SidebarInset className="flex flex-col flex-1 overflow-hidden relative"> {/* Ensure SidebarInset takes up remaining space */}
-          <div className="absolute top-2 left-2 z-10 md:hidden"> {/* Mobile toggle for Dock */}
+        <SidebarInset className="flex flex-col flex-1 overflow-hidden relative">
+          <div className="absolute top-2 left-2 z-10 md:hidden">
              <CustomSidebarTrigger />
           </div>
           <Space activeToolInstance={activeToolInstance} onContentChange={handleContentChange} />
         </SidebarInset>
 
-        {/* Agent Stream Sidebar */}
-        {/* For Agent Stream, we might want it to be "floating" or "inset" depending on design.
-            Using standard sidebar for now, collapsible from the right. */}
-        <Sidebar
-          side="right"
-          variant="sidebar"
-          collapsible="offcanvas" // Makes it retractable completely
-          className="border-l bg-sidebar text-sidebar-foreground shadow-md w-[380px] lg:w-[420px] data-[collapsible=icon]:w-14 transition-all duration-300 ease-in-out z-20"
-        >
-           <SidebarHeader className="p-3 border-b border-sidebar-border h-14 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-primary group-data-[collapsible=icon]:hidden">AI Companion</h2>
-              {/* Optional: Add a trigger here if collapsible="icon" and want manual toggle */}
-           </SidebarHeader>
-          <SidebarContent className="p-0 flex flex-col overflow-hidden"> {/* Ensure content can scroll if it overflows */}
-            {activeToolInstance ? (
-              <>
-                <AgentStream
-                  activeTool={activeToolInstance}
-                  currentContent={activeToolInstance.id === 'document-processor' ? documentContent : undefined}
-                  onContentUpdate={handleContentChange}
-                />
-                <SmartSuggestions activeToolName={activeToolInstance.name} />
-              </>
-            ) : (
-              <div className="p-6 text-center text-muted-foreground group-data-[collapsible=icon]:hidden flex flex-col items-center justify-center h-full">
-                <Bot className="h-12 w-12 mb-4 text-primary/50" />
-                <p>Select a tool to activate AI assistance and smart suggestions.</p>
-              </div>
-            )}
-          </SidebarContent>
-        </Sidebar>
+        {/* Global Agent Stream Sidebar and Smart Suggestions are removed as per new requirements.
+            They will be integrated into each tool's component. */}
       </div>
       <Toaster />
     </SidebarProvider>

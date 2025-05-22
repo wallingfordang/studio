@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -5,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Lightbulb, RefreshCcw, AlertCircle, Loader2 } from 'lucide-react';
 import { getSmartSuggestions, type SmartSuggestionsInput } from '@/ai/flows/smart-suggestions';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Separator } from '@/components/ui/separator';
 
 interface SmartSuggestionsProps {
   activeToolName: string;
@@ -39,7 +39,7 @@ export const SmartSuggestions: React.FC<SmartSuggestionsProps> = ({ activeToolNa
   }, [activeToolName, fetchSuggestions]);
 
   return (
-    <div className="p-3 border-t border-border bg-background group-data-[collapsible=icon]:hidden">
+    <div className="p-3 border-t border-border bg-inherit"> {/* Changed bg-background to bg-inherit */}
       <div className="flex items-center justify-between mb-2">
         <h3 className="text-sm font-semibold flex items-center text-foreground">
           <Lightbulb className="mr-1.5 h-4 w-4 text-primary" />
@@ -53,7 +53,7 @@ export const SmartSuggestions: React.FC<SmartSuggestionsProps> = ({ activeToolNa
       <div className="text-xs">
         {isLoading && (
           <div className="space-y-1.5">
-            {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-3.5 w-full rounded" />)}
+            {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-3.5 w-full rounded bg-muted/50" />)}
           </div>
         )}
         {error && (
