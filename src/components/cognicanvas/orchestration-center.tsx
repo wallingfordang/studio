@@ -9,7 +9,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Bot, Send, PlayCircle, PlugZap, Sparkles, MessageSquare, Loader2, PlusCircle } from 'lucide-react';
 import { orchestrateTask, type OrchestrateTaskInput, type ToolInfo } from '@/ai/flows/orchestrate-task-flow';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'; // Ensure Avatar components are imported
 
 interface OrchestrationCenterProps {
   tools: Tool[];
@@ -41,18 +41,17 @@ export const OrchestrationCenter: React.FC<OrchestrationCenterProps> = ({ tools,
   const scrollViewportRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-
   useEffect(() => {
-    setClientReady(true); // Moved setClientReady to its own useEffect to run once on mount
+    setClientReady(true);
   }, []);
 
   useEffect(() => {
-    if (clientReady) {
+    if (clientReady && conversation.length === 0) {
       setConversation([
         { id: generateUniqueId() + '-initial-agent', sender: 'agent', text: `Hello ${userName}, I'm your Orchestration Agent. How can I help you orchestrate a task or project today?`, timestamp: new Date() }
       ]);
     }
-  }, [userName, clientReady]);
+  }, [userName, clientReady, conversation.length]);
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -128,8 +127,8 @@ export const OrchestrationCenter: React.FC<OrchestrationCenterProps> = ({ tools,
   );
 
   return (
-    <div className="flex flex-col h-full p-4 md:p-6 lg:p-8 bg-background text-foreground overflow-hidden space-y-6 lg:space-y-8">
-      <Card className="shadow-xl border-border flex flex-col flex-grow min-h-0">
+    <div className="grid grid-rows-[minmax(0,1fr)_auto] h-full p-4 md:p-6 lg:p-8 bg-background text-foreground overflow-hidden gap-6 lg:gap-8">
+      <Card className="shadow-xl border-border flex flex-col min-h-0"> {/* Chat Card - Removed flex-grow, grid handles sizing */}
         <CardHeader className="border-b p-4">
           <CardTitle className="text-xl flex items-center">
             <Sparkles className="mr-3 h-6 w-6 text-primary" />
@@ -138,7 +137,7 @@ export const OrchestrationCenter: React.FC<OrchestrationCenterProps> = ({ tools,
         </CardHeader>
         <CardContent className="p-0 flex-grow flex flex-col overflow-hidden">
           <ScrollArea className="flex-grow" viewportRef={scrollViewportRef}>
-            <div className="p-6 space-y-4"> {/* Increased padding from p-4 to p-6 */}
+            <div className="p-6 space-y-4">
               {conversation.map((msg) => (
                 <div key={msg.id} className={`flex w-full ${msg.sender === 'user' ? 'justify-end' : 'justify-start'} ${msg.sender === 'log' ? 'my-1' : 'my-2'}`}>
                   {msg.sender === 'agent' && (
@@ -222,7 +221,7 @@ export const OrchestrationCenter: React.FC<OrchestrationCenterProps> = ({ tools,
         </CardContent>
       </Card>
 
-      <Card className="shadow-xl border-border shrink-0">
+      <Card className="shadow-xl border-border shrink-0"> {/* Quick Access Card - will take auto height */}
         <CardHeader className="border-b p-4">
           <CardTitle className="text-xl flex items-center">
             <PlayCircle className="mr-3 h-6 w-6 text-primary" />
